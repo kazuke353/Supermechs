@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@preact/signals": "^2.11.2",
+    "peerjs": "^1.5.5",
     "preact": "^10.29.8"
   },
   "devDependencies": {

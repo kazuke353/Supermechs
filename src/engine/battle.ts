@@ -152,9 +152,10 @@ export interface UseEvent {
   selfEnergy: number
   moves: Move[]
   usesLeft: number | null
+  snap?: BattleSnapshot
 }
 
-export type BattleEvent =
+export type BattleEvent = (
   | { t: 'start'; first: Side; positions: [number, number] }
   | { t: 'turn'; player: Side; actions: number; turnCount: number }
   | { t: 'walk'; move: Move }
@@ -164,6 +165,7 @@ export type BattleEvent =
   | { t: 'droneIdle'; player: Side; reason: string }
   | { t: 'regen'; player: Side; energy: number }
   | { t: 'end'; winner: Side; reason: 'destroyed' | 'forfeit' | 'timeout' }
+) & { snap?: BattleSnapshot }
 
 export interface FighterInit {
   name: string
@@ -242,9 +244,10 @@ export function createBattle(
     endReason: null,
     arena,
   }
+  const snap = snapshot(state)
   const events: BattleEvent[] = [
-    { t: 'start', first: starter, positions: [positions[0], positions[1]] },
-    { t: 'turn', player: starter, actions: 1, turnCount: 1 },
+    { t: 'start', first: starter, positions: [positions[0], positions[1]], snap },
+    { t: 'turn', player: starter, actions: 1, turnCount: 1, snap },
   ]
   return { state, events }
 }
@@ -427,11 +430,75 @@ export function hasDamage(stats: ItemStats): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Snapshots (for the UI to update bars in step with animations)
+
+export interface FighterSnap {
+  hp: number
+  hpMax: number
+  energy: number
+  eneCap: number
+  eneReg: number
+  heat: number
+  heaCap: number
+  heaCol: number
+  phyRes: number
+  expRes: number
+  eleRes: number
+  position: number
+  droneActive: boolean
+  uses: Partial<Record<SlotName, number>>
+}
+
+export interface BattleSnapshot {
+  fighters: [FighterSnap, FighterSnap]
+  turn: Side
+  actionsLeft: number
+  turnCount: number
+}
+
+function snapFighter(f: Fighter): FighterSnap {
+  return {
+    hp: f.hp,
+    hpMax: f.hpMax,
+    energy: f.energy,
+    eneCap: f.eneCap,
+    eneReg: f.eneReg,
+    heat: f.heat,
+    heaCap: f.heaCap,
+    heaCol: f.heaCol,
+    phyRes: f.phyRes,
+    expRes: f.expRes,
+    eleRes: f.eleRes,
+    position: f.position,
+    droneActive: f.droneActive,
+    uses: { ...f.uses },
+  }
+}
+
+export function snapshot(state: BattleState): BattleSnapshot {
+  return {
+    fighters: [snapFighter(state.fighters[0]), snapFighter(state.fighters[1])],
+    turn: state.turn,
+    actionsLeft: state.actionsLeft,
+    turnCount: state.turnCount,
+  }
+}
+
+type EventList = BattleEvent[] & { snap?: boolean }
+
+function emit(state: BattleState, events: EventList, ev: BattleEvent) {
+  if (events.snap) ev.snap = snapshot(state)
+  events.push(ev)
+}
+
+// ---------------------------------------------------------------------------
 // Execution
 
 export interface ApplyOptions {
   /** Use the average damage roll and leave the RNG untouched (AI planning). */
   expected?: boolean
+  /** Attach a state snapshot to every emitted event. */
+  snapshots?: boolean
 }
 
 function roll(state: BattleState, opts?: ApplyOptions): number {
@@ -599,7 +666,7 @@ function useItem(state: BattleState, side: Side, slot: SlotName, kind: UseKind, 
   }
 }
 
-function checkDeath(state: BattleState, events: BattleEvent[]): boolean {
+function checkDeath(state: BattleState, events: EventList): boolean {
   const [a, b] = state.fighters
   if (a.hp > 0 && b.hp > 0) return false
   const winner: Side = a.hp < b.hp ? 1 : 0
@@ -607,35 +674,35 @@ function checkDeath(state: BattleState, events: BattleEvent[]): boolean {
   return true
 }
 
-function finish(state: BattleState, events: BattleEvent[], winner: Side, reason: 'destroyed' | 'forfeit' | 'timeout') {
+function finish(state: BattleState, events: EventList, winner: Side, reason: 'destroyed' | 'forfeit' | 'timeout') {
   state.winner = winner
   state.endReason = reason
   state.actionsLeft = 0
-  events.push({ t: 'end', winner, reason })
+  emit(state, events, { t: 'end', winner, reason })
 }
 
-function regen(state: BattleState, side: Side, events: BattleEvent[]) {
+function regen(state: BattleState, side: Side, events: EventList) {
   const f = state.fighters[side]
   const before = f.energy
   f.energy = Math.min(f.eneCap, f.energy + f.eneReg)
-  events.push({ t: 'regen', player: side, energy: f.energy - before })
+  emit(state, events, { t: 'regen', player: side, energy: f.energy - before })
 }
 
-function endTurn(state: BattleState, events: BattleEvent[], opts?: ApplyOptions) {
+function endTurn(state: BattleState, events: EventList, opts?: ApplyOptions) {
   const side = state.turn
   const me = state.fighters[side]
 
   if (me.droneActive && me.items.drone) {
     const reason = whyCantUse(state, 'drone')
     if (reason) {
-      events.push({ t: 'droneIdle', player: side, reason })
+      emit(state, events, { t: 'droneIdle', player: side, reason })
     } else {
       const ev = useItem(state, side, 'drone', 'drone', opts)
-      events.push(ev)
+      emit(state, events, ev)
       if (ev.usesLeft === 0) {
         // Out of uses: the drone powers down until toggled again.
         me.droneActive = false
-        events.push({ t: 'droneToggle', player: side, active: false })
+        emit(state, events, { t: 'droneToggle', player: side, active: false })
       }
       if (checkDeath(state, events)) return
     }
@@ -644,7 +711,7 @@ function endTurn(state: BattleState, events: BattleEvent[], opts?: ApplyOptions)
   passTurn(state, events)
 }
 
-function passTurn(state: BattleState, events: BattleEvent[]) {
+function passTurn(state: BattleState, events: EventList) {
   const side = state.turn
   regen(state, side, events)
   state.fighters[side].usedThisTurn = []
@@ -653,7 +720,7 @@ function passTurn(state: BattleState, events: BattleEvent[]) {
   startTurn(state, events)
 }
 
-function startTurn(state: BattleState, events: BattleEvent[]) {
+function startTurn(state: BattleState, events: EventList) {
   if (state.turnCount > MAX_TURNS) {
     const [a, b] = state.fighters
     const winner: Side = a.hp / a.hpMax >= b.hp / b.hpMax ? 0 : 1
@@ -666,7 +733,7 @@ function startTurn(state: BattleState, events: BattleEvent[]) {
     const shutdown = f.heat - f.heaCol > f.heaCap
     const amount = Math.min(f.heat, f.heaCol * (shutdown ? 2 : 1))
     f.heat -= amount
-    events.push({ t: 'cooldown', player: side, amount, forced: shutdown ? 'shutdown' : 'overheat' })
+    emit(state, events, { t: 'cooldown', player: side, amount, forced: shutdown ? 'shutdown' : 'overheat' })
     if (shutdown) {
       f.stats.shutdowns++
       passTurn(state, events)
@@ -676,7 +743,7 @@ function startTurn(state: BattleState, events: BattleEvent[]) {
   } else {
     state.actionsLeft = 2
   }
-  events.push({ t: 'turn', player: side, actions: state.actionsLeft, turnCount: state.turnCount })
+  emit(state, events, { t: 'turn', player: side, actions: state.actionsLeft, turnCount: state.turnCount })
 }
 
 /**
@@ -688,7 +755,8 @@ export function applyAction(state: BattleState, action: Action, opts?: ApplyOpti
   if (!isLegal(state, action)) throw new Error(`Illegal action: ${JSON.stringify(action)}`)
   const side = state.turn
   const me = state.fighters[side]
-  const events: BattleEvent[] = []
+  const events: EventList = []
+  events.snap = !!opts?.snapshots
 
   switch (action.type) {
     case 'forfeit':
@@ -696,36 +764,37 @@ export function applyAction(state: BattleState, action: Action, opts?: ApplyOpti
       return events
     case 'walk': {
       const jump = isJumpMove(state, side, action.to)
-      events.push({ t: 'walk', move: { player: side, from: me.position, to: action.to, kind: jump ? 'jump' : 'walk' } })
+      const move: Move = { player: side, from: me.position, to: action.to, kind: jump ? 'jump' : 'walk' }
       me.position = action.to
+      emit(state, events, { t: 'walk', move })
       break
     }
     case 'fire':
-      events.push(useItem(state, side, action.slot, 'fire', opts))
+      emit(state, events, useItem(state, side, action.slot, 'fire', opts))
       break
     case 'stomp':
-      events.push(useItem(state, side, 'legs', 'stomp', opts))
+      emit(state, events, useItem(state, side, 'legs', 'stomp', opts))
       break
     case 'charge':
-      events.push(useItem(state, side, 'charge', 'charge', opts))
+      emit(state, events, useItem(state, side, 'charge', 'charge', opts))
       break
     case 'hook':
-      events.push(useItem(state, side, 'hook', 'hook', opts))
+      emit(state, events, useItem(state, side, 'hook', 'hook', opts))
       break
     case 'teleport':
-      events.push(useItem(state, side, 'teleporter', 'teleport', opts, action.to))
+      emit(state, events, useItem(state, side, 'teleporter', 'teleport', opts, action.to))
       break
     case 'drone': {
       me.droneActive = !me.droneActive
       const drone = me.items.drone!
       if (me.droneActive && typeof drone.stats.uses === 'number') me.uses.drone = drone.stats.uses
-      events.push({ t: 'droneToggle', player: side, active: me.droneActive })
+      emit(state, events, { t: 'droneToggle', player: side, active: me.droneActive })
       break
     }
     case 'cooldown': {
       const amount = Math.min(me.heat, me.heaCol)
       me.heat -= amount
-      events.push({ t: 'cooldown', player: side, amount, forced: 'none' })
+      emit(state, events, { t: 'cooldown', player: side, amount, forced: 'none' })
       break
     }
   }

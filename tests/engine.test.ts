@@ -50,6 +50,18 @@ describe('turn structure', () => {
     expect(legalActions(state)).toHaveLength(0)
   })
 
+  it('attaches post-event snapshots when requested', () => {
+    const { state } = battle({ ...basic, side1: 's_servicerifle' }, basic, { positions: [3, 6] })
+    const events = applyAction(state, { type: 'fire', slot: 'side1' }, { snapshots: true })
+    expect(events.length).toBeGreaterThan(0)
+    for (const e of events) expect(e.snap).toBeDefined()
+    const use = uses(events)[0]
+    expect(use.snap!.fighters[1].hp).toBe(state.fighters[1].hp)
+    expect(use.snap!.fighters[1].hp).toBeLessThan(use.snap!.fighters[1].hpMax)
+    const plain = battle({ ...basic, side1: 's_servicerifle' }, basic, { positions: [3, 6] })
+    expect(applyAction(plain.state, { type: 'fire', slot: 'side1' })[0].snap).toBeUndefined()
+  })
+
   it('ends the battle when a player forfeits', () => {
     const { state } = battle(basic, basic)
     applyAction(state, { type: 'forfeit' })
