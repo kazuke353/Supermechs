@@ -1,53 +1,22 @@
-import { useEffect, useState } from 'preact/hooks'
 import { audio } from '../../audio/audio'
-import { powerRating } from '../../engine/mech'
-import { SLOT_NAMES, type SlotName } from '../../engine/types'
-import type { VisualLoadout } from '../../art/mech'
-import { LEAGUES, leagueOf, opponentPower, rankLabel, rankUpReward, starsNeeded, type ArenaOpponent } from '../../game/arena'
+import { LEAGUES, leagueOf, opponentPower, rankLabel, rankUpReward, starsNeeded } from '../../game/arena'
 import { TIER_NAMES } from '../../engine/stats'
-import { activeMech, activeLoadoutValid, loadoutOf, save } from '../../game/store'
+import { activeLoadoutValid, save } from '../../game/store'
 import { IconStar, Token, Gold } from '../icons'
-import { MechView } from '../components/MechView'
 import { findArenaOpponent, startArena } from '../launch'
-import { mechVisual } from './Home'
 import { toast } from '../state'
-
-function visualOf(o: ArenaOpponent): VisualLoadout {
-  const v: VisualLoadout = {}
-  for (const slot of SLOT_NAMES) if (o.loadout[slot]) v[slot as SlotName] = o.loadout[slot]!.def
-  return v
-}
 
 export function Arena() {
   const s = save.value
   const a = s.arena
   const league = leagueOf(a.rank)
   const need = starsNeeded(a.rank)
-  const [searching, setSearching] = useState(false)
-  const [opp, setOpp] = useState<ArenaOpponent | null>(null)
-  const [dots, setDots] = useState(0)
-  const mech = activeMech(s)
-
-  useEffect(() => {
-    if (!searching) return
-    const iv = setInterval(() => setDots((d) => (d + 1) % 4), 300)
-    const t = setTimeout(() => {
-      setOpp(findArenaOpponent())
-      setSearching(false)
-      audio.play('reveal')
-    }, 1600)
-    return () => {
-      clearInterval(iv)
-      clearTimeout(t)
-    }
-  }, [searching])
-
-  const search = () => {
+  // Every fight is against a freshly rolled pilot near your rank.
+  const fight = () => {
     const v = activeLoadoutValid(s)
     if (!v.ok) return toast(`Fix your mech first: ${v.errors[0]}`, 'bad')
     audio.play('click')
-    setOpp(null)
-    setSearching(true)
+    startArena(findArenaOpponent())
   }
 
   const power = opponentPower(a.rank)
@@ -95,55 +64,10 @@ export function Arena() {
             </span>
           </div>
         </div>
-        <button class="btn primary big" onClick={search} disabled={searching}>
-          {searching ? 'Searching' : opp ? 'Find another' : 'Find match'}
+        <button class="btn primary big" onClick={fight}>
+          Fight
         </button>
       </div>
-
-      {(searching || opp) && (
-        <div class="panel">
-          <div class="vs">
-            <div class="card">
-              {mech && <MechView items={mechVisual(mech.slots)} fill={0.8} />}
-              <div>
-                <b>{s.pilot.name}</b>
-                <div class="muted num" style={{ fontSize: 13 }}>
-                  {mech?.name} · Power {powerRating(loadoutOf(s, mech)).toLocaleString()}
-                </div>
-              </div>
-            </div>
-            <div class="vs-mark">VS</div>
-            <div class="card">
-              {searching || !opp ? (
-                <div style={{ height: 200, display: 'grid', placeItems: 'center', padding: 0 }}>
-                  <span class="label">Searching for pilots near {rankLabel(a.rank)}{'.'.repeat(dots)}</span>
-                </div>
-              ) : (
-                <MechView items={visualOf(opp)} facing={-1} fill={0.8} />
-              )}
-              <div>
-                {opp && !searching ? (
-                  <>
-                    <b>{opp.name}</b>
-                    <div class="muted num" style={{ fontSize: 13 }}>
-                      {opp.mechName} · {rankLabel(opp.rank)} · Power {powerRating(opp.loadout).toLocaleString()}
-                    </div>
-                  </>
-                ) : (
-                  <b>&nbsp;</b>
-                )}
-              </div>
-            </div>
-          </div>
-          {opp && !searching && (
-            <div class="row" style={{ justifyContent: 'center', marginTop: 14 }}>
-              <button class="btn primary big" onClick={() => startArena(opp)}>
-                Fight
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       <div class="panel">
         <div class="panel-head">
