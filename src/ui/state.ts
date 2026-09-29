@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals'
 import type { BattleController, EndInfo } from '../battle/controller'
+import type { Style } from '../game/playstyles'
 import type { RewardSummary } from '../game/store'
 
 export type Route = 'home' | 'hangar' | 'factory' | 'shop' | 'campaign' | 'arena' | 'workshop' | 'versus' | 'quests'
@@ -41,8 +42,11 @@ export interface BattleSession {
 
 export const battle = signal<BattleSession | null>(null)
 
-export type ModalId = 'settings' | 'help' | 'login' | null
+export type ModalId = 'settings' | 'help' | 'login' | 'tutorialDone' | null
 export const modal = signal<ModalId>(null)
+
+/** The playstyle a pilot leaned toward on the intro screen; the depot stars its sample build. */
+export const preferredStyle = signal<Style | null>(null)
 
 export interface Toast {
   id: number

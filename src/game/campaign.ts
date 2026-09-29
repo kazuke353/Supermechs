@@ -267,6 +267,17 @@ function buildChapter(spec: ChapterSpec, ci: number): Chapter {
 export const CHAPTERS: Chapter[] = SPECS.map(buildChapter)
 export const MISSIONS: Record<string, Mission> = Object.fromEntries(CHAPTERS.flatMap((c) => c.missions.map((m) => [m.id, m])))
 
+/**
+ * The first three enemies are hand-built. Pilots start with nothing and buy
+ * their own parts, so these mirror what a fresh bankroll pays for (a torso,
+ * legs and a weapon or two) instead of fielding a fully kitted machine.
+ */
+const OPENERS: Partial<Record<SlotName, string>>[] = [
+  { torso: 't_ironclad', legs: 'l_voltwalkers', side1: 's_scrapcannon' },
+  { torso: 't_cinder', legs: 'l_cinderboots', side1: 's_torch', side2: 's_firecracker', module1: 'm_scrapplating' },
+  { torso: 't_voltframe', legs: 'l_voltwalkers', side1: 's_zapper', side2: 's_pulselaser', module1: 'm_basicbattery' },
+]
+
 /** Deterministic enemy mech for a mission. */
 export function missionLoadout(m: Mission): Loadout {
   const spec = SPECS[m.chapter]
@@ -278,16 +289,23 @@ export function missionLoadout(m: Mission): Loadout {
     }
     return l
   }
+  if (m.chapter === 0 && m.index < OPENERS.length) {
+    const l: Loadout = {}
+    for (const [slot, id] of Object.entries(OPENERS[m.index])) l[slot as SlotName] = resolveAt(getItem(id!), 0, m.level)
+    return l
+  }
   const rng = new Rng(hashString(m.id + ':enemy'))
-  // Early missions field smaller mechs so new pilots can learn.
-  const early = m.chapter === 0 && m.index < 3
+  // The rest of region one grows a few parts at a time so gear can keep up.
+  const ramp = m.chapter === 0 && m.index < 7
   return generateLoadout(rng, {
     tier: m.tier,
     level: m.level,
     element: m.element,
-    sides: early ? 1 + m.index : undefined,
-    tops: early ? 0 : undefined,
-    drone: early ? false : undefined,
+    sides: ramp ? (m.index < 5 ? 2 : 3) : undefined,
+    tops: ramp ? (m.index < 5 ? 1 : 2) : undefined,
+    drone: ramp && m.index < 4 ? false : undefined,
+    modules: ramp ? m.index - 1 : undefined,
+    utilities: ramp && m.index < 6 ? false : undefined,
     maxStartTier: m.tier,
   })
 }

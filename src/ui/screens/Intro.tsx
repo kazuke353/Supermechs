@@ -1,39 +1,39 @@
 import { useState } from 'preact/hooks'
 import { getItem } from '../../engine/catalog'
-import type { Element, SlotName } from '../../engine/types'
+import type { SlotName } from '../../engine/types'
 import { audio } from '../../audio/audio'
-import { importCode } from '../../game/save'
-import { newGame, replaceSave, starterPreview, STARTER_NAMES } from '../../game/store'
-import { IconCheck } from '../icons'
+import { STARTING_GOLD, importCode } from '../../game/save'
+import { PLAYSTYLES, sampleCost, type Playstyle } from '../../game/playstyles'
+import { newGame, replaceSave } from '../../game/store'
+import { Gold, IconCheck } from '../icons'
 import { MechView } from '../components/MechView'
 import { sceneImage } from '../../battle/sceneImage'
-import { toast } from '../state'
+import { go, preferredStyle, toast } from '../state'
 import type { VisualLoadout } from '../../art/mech'
 
-type StarterEl = Exclude<Element, 'COMBINED'>
-
-const BLURBS: Record<StarterEl, { color: string; text: string }> = {
-  PHYSICAL: { color: 'var(--phy)', text: 'Tough and simple. Physical weapons need little energy and generate modest heat. A grappling hook pulls enemies into range.' },
-  EXPLOSIVE: { color: 'var(--exp)', text: 'Heat weapons pile heat on your enemy until they overheat and lose their turn. Comes with a charge engine.' },
-  ELECTRIC: { color: 'var(--ele)', text: 'Energy weapons drain enemy energy and deal bonus damage when they run dry. Comes with a teleporter.' },
-}
-
-function preview(el: StarterEl): VisualLoadout {
+function preview(p: Playstyle): VisualLoadout {
   const out: VisualLoadout = {}
-  for (const [slot, id] of Object.entries(starterPreview(el))) out[slot as SlotName] = getItem(id!)
+  for (const [slot, id] of Object.entries(p.sample)) out[slot as SlotName] = getItem(id!)
   return out
 }
 
+const PLAN = [
+  { n: 1, title: 'Buy parts', text: 'Spend your gold in the Shop’s Parts Depot: a torso, legs and weapons.' },
+  { n: 2, title: 'Assemble', text: 'Fit them to your mech in the Hangar, slot by slot.' },
+  { n: 3, title: 'Fight', text: 'Win mission 1-1 to earn more gold and better loot.' },
+]
+
 export function Intro() {
   const [name, setName] = useState('')
-  const [el, setEl] = useState<StarterEl>('PHYSICAL')
   const [importing, setImporting] = useState(false)
   const [code, setCode] = useState('')
+  const style = preferredStyle.value
 
   const deploy = () => {
     audio.unlock()
     audio.play('levelUp')
-    newGame(name || 'Pilot', el)
+    newGame(name || 'Pilot')
+    go('shop')
   }
 
   return (
@@ -62,24 +62,53 @@ export function Intro() {
         <input id="pilot-name" class="input" maxLength={16} placeholder="Pilot" value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} />
       </div>
 
-      <h2>Choose your starter mech</h2>
+      <h2>You start with nothing but gold</h2>
+      <div class="plan">
+        <div class="plan-bank">
+          <Gold /> <b class="num">{STARTING_GOLD.toLocaleString()}</b>
+          <span>to spend on your first mech</span>
+        </div>
+        <ol>
+          {PLAN.map((p) => (
+            <li key={p.n}>
+              <b>{p.n}</b>
+              <div>
+                <strong>{p.title}</strong>
+                <span>{p.text}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <h2>Lean toward a playstyle (optional)</h2>
+      <p class="muted" style={{ marginTop: -12, textAlign: 'center', maxWidth: '58ch' }}>
+        Parts can be mixed freely. Your pick only marks a sample build you can afford with a ★ in the depot; the whole catalog stays open to you.
+      </p>
       <div class="starters">
-        {(['PHYSICAL', 'EXPLOSIVE', 'ELECTRIC'] as StarterEl[]).map((e) => (
-          <button class={`starter${el === e ? ' on' : ''}`} style={{ '--sc': BLURBS[e].color }} onClick={() => setEl(e)} aria-pressed={el === e}>
-            <MechView items={preview(e)} fill={0.8} />
+        {PLAYSTYLES.map((p) => (
+          <button
+            key={p.id}
+            class={`starter${style === p.id ? ' on' : ''}`}
+            style={{ '--sc': p.color }}
+            onClick={() => (preferredStyle.value = style === p.id ? null : p.id)}
+            aria-pressed={style === p.id}
+          >
+            <MechView items={preview(p)} fill={0.8} />
             <div>
-              <h3>{STARTER_NAMES[e]}</h3>
-              <span class="label">{e === 'PHYSICAL' ? 'Physical' : e === 'EXPLOSIVE' ? 'Explosive / Heat' : 'Electric / Energy'}</span>
-              <p style={{ fontSize: 13 }}>
-                {BLURBS[e].text}
-              </p>
+              <h3>{p.name}</h3>
+              <span class="label">{p.label}</span>
+              <p style={{ fontSize: 13 }}>{p.blurb}</p>
+              <span class="sample-cost num">
+                Sample build <Gold /> {sampleCost(p).toLocaleString()}
+              </span>
             </div>
           </button>
         ))}
       </div>
 
       <button class="btn primary big" onClick={deploy}>
-        Deploy mech
+        Start building
       </button>
 
       {!importing ? (

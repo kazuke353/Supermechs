@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks'
-import type { JSX } from 'preact'
+import type { ComponentChildren, JSX } from 'preact'
 import { OVERLOAD_LIMIT, summarize, validateLoadout, WEIGHT_LIMIT } from '../../engine/mech'
 import { TIER_NAMES } from '../../engine/stats'
 import { SLOT_TYPE, type ItemType, type Loadout, type SlotName } from '../../engine/types'
@@ -11,7 +11,7 @@ import { ElementLabel, EmptyTile, ItemTile, StatList, TYPE_LABEL } from './items
 import { MechView } from './MechView'
 import { SLOT_LABEL, type Candidate, type SlotView } from './loadout'
 
-interface Cat {
+export interface Cat {
   id: string
   label: string
   types: ItemType[]
@@ -25,7 +25,7 @@ const glyph = (d: string) => (p: JSX.SVGAttributes<SVGSVGElement>) => (
   </svg>
 )
 
-const CATS: Cat[] = [
+export const CATS: Cat[] = [
   { id: 'torso', label: 'Torso', types: ['TORSO'], slots: ['torso'], icon: IconMech },
   { id: 'legs', label: 'Legs', types: ['LEGS'], slots: ['legs'], icon: glyph('M8 3v8l-3 10h5l2-8 2 8h5l-3-10V3z') },
   { id: 'side', label: 'Side', types: ['SIDE_WEAPON'], slots: ['side1', 'side2', 'side3', 'side4'], icon: glyph('M2 10h14l2-2h4v6h-4l-2-2H9v4H5v-4H2z') },
@@ -65,7 +65,7 @@ export interface GarageProps {
   current: (slot: SlotName) => Candidate | null
   onEquip: (slot: SlotName, key: string | null) => void
   side?: JSX.Element
-  emptyHint?: string
+  emptyHint?: ComponentChildren
 }
 
 function StatStrip({ loadout }: { loadout: Loadout }) {
@@ -93,7 +93,7 @@ function StatStrip({ loadout }: { loadout: Loadout }) {
 
 export function Garage(props: GarageProps) {
   const { view, loadout, candidates, current, onEquip, counts } = props
-  const [slot, setSlot] = useState<SlotName>('side1')
+  const [slot, setSlot] = useState<SlotName>(() => (!view.torso ? 'torso' : !view.legs ? 'legs' : 'side1'))
   const [sel, setSel] = useState<string | null>(null)
   const [el, setEl] = useState('ALL')
   const s = summarize(loadout)
@@ -185,7 +185,8 @@ export function Garage(props: GarageProps) {
         <div class="panel" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div class="panel-head" style={{ marginBottom: 0 }}>
             <h2>
-              {SLOT_LABEL[slot]} · {TYPE_LABEL[SLOT_TYPE[slot]]}
+              {SLOT_LABEL[slot]}
+              {SLOT_LABEL[slot].toLowerCase() !== TYPE_LABEL[SLOT_TYPE[slot]].toLowerCase() && ` · ${TYPE_LABEL[SLOT_TYPE[slot]]}`}
             </h2>
             <select class="select" aria-label="Element filter" value={el} onChange={(e) => setEl((e.target as HTMLSelectElement).value)}>
               <option value="ALL">All elements</option>

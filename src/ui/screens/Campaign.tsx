@@ -11,6 +11,7 @@ import { ItemTile } from '../components/items'
 import { MechView } from '../components/MechView'
 import { sceneImage } from '../../battle/sceneImage'
 import { startMission } from '../launch'
+import { currentStep, tutorialActive, TUTORIAL_MISSION } from '../../game/tutorial'
 
 const DIFF_LABEL = { easy: 'Rookie AI', normal: 'Veteran AI', hard: 'Elite AI', boss: 'Boss AI' } as const
 
@@ -130,6 +131,7 @@ export function Campaign() {
   const [ci, setCi] = useState(firstOpen >= 0 ? firstOpen : 0)
   const [mission, setMission] = useState<Mission | null>(null)
   const chapter = CHAPTERS[ci]
+  const step = tutorialActive(s) ? currentStep(s) : null
 
   return (
     <>
@@ -179,7 +181,7 @@ export function Campaign() {
             const unlocked = isUnlocked(s.campaign, m)
             const stars = s.campaign[m.id] ?? 0
             return (
-              <button class={`node${m.boss ? ' boss' : ''}`} disabled={!unlocked} onClick={() => setMission(m)}>
+              <button class={`node${m.boss ? ' boss' : ''}${step?.id === 'battle' && m.id === TUTORIAL_MISSION ? ' hint' : ''}`} disabled={!unlocked} onClick={() => setMission(m)}>
                 <span class="idx">
                   {m.chapter + 1}-{m.index + 1}
                   {m.boss ? ' · BOSS' : ''}

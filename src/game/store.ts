@@ -7,13 +7,15 @@ import { getItem, ITEMS } from '../engine/catalog'
 import { resolveItem, validateLoadout } from '../engine/mech'
 import { Rng } from '../engine/rng'
 import { TIER_MAX_LEVEL } from '../engine/stats'
-import { SLOT_TYPE, type Element, type ItemInstance, type Loadout, type SlotName, type Tier } from '../engine/types'
+import { SLOT_TYPE, type ItemInstance, type Loadout, type SlotName, type Tier } from '../engine/types'
 import { applyResult, arenaReward, rankUpReward, type RankChange } from './arena'
 import { BOX_MAP, openBox, type Drop } from './boxes'
 import { MISSIONS, starsFor } from './campaign'
 import { addXp, canTransform, fodderXp, fuseCost, KITS, sellValue, transform, transformCost, type KitId } from './economy'
 import { ACHIEVEMENTS, levelUpReward, LOGIN_REWARDS, MAX_PILOT_LEVEL, QUEST_MAP, questsForDay, xpToLevel, type QuestEvent, type Reward } from './progress'
+import { DEPOT_STOCK, depotPrice, purchaseBlock } from './depot'
 import { defaultSave, loadSave, today, writeSave, type MechSetup, type SaveData } from './save'
+import { TUTORIAL_REWARD, tutorialActive, tutorialComplete } from './tutorial'
 
 export const save = signal<SaveData>(loadSave() ?? defaultSave())
 export const storageOk = signal(true)
@@ -98,80 +100,52 @@ export function equippedUids(s: SaveData): Set<string> {
 // ---------------------------------------------------------------------------
 // New game
 
-const STARTERS: Record<Exclude<Element, 'COMBINED'>, { mech: Partial<Record<SlotName, string>>; extras: string[] }> = {
-  PHYSICAL: {
-    mech: {
-      torso: 't_ironclad',
-      legs: 'l_stompers',
-      side1: 's_scrapcannon',
-      side2: 's_servicerifle',
-      top1: 'tp_rustymortar',
-      drone: 'd_buzz',
-      hook: 'h_claw',
-      module1: 'm_scrapplating',
-      module2: 'm_basiccooler',
-    },
-    extras: ['s_torch', 's_zapper', 'm_phyprot', 'c_ram'],
-  },
-  EXPLOSIVE: {
-    mech: {
-      torso: 't_cinder',
-      legs: 'l_cinderboots',
-      side1: 's_torch',
-      side2: 's_firecracker',
-      top1: 'tp_bottlerockets',
-      drone: 'd_emberwisp',
-      charge: 'c_ram',
-      module1: 'm_scrapplating',
-      module2: 'm_basiccooler',
-    },
-    extras: ['s_servicerifle', 's_pulselaser', 'm_heatprot', 'h_claw'],
-  },
-  ELECTRIC: {
-    mech: {
-      torso: 't_voltframe',
-      legs: 'l_voltwalkers',
-      side1: 's_zapper',
-      side2: 's_pulselaser',
-      top1: 'tp_ionmortar',
-      drone: 'd_sparky',
-      teleporter: 'tele_blink',
-      module1: 'm_scrapplating',
-      module2: 'm_basicbattery',
-    },
-    extras: ['s_scrapcannon', 's_torch', 'm_eneprot', 'c_ram'],
-  },
-}
-
-export const STARTER_NAMES: Record<Exclude<Element, 'COMBINED'>, string> = {
-  PHYSICAL: 'Ironclad',
-  EXPLOSIVE: 'Cinderframe',
-  ELECTRIC: 'Voltframe',
-}
-
-export function starterPreview(el: Exclude<Element, 'COMBINED'>) {
-  return STARTERS[el].mech
-}
-
-export function newGame(pilotName: string, element: Exclude<Element, 'COMBINED'>) {
+/** A fresh pilot: some gold, an empty hangar bay and the tutorial ahead of them. */
+export function newGame(pilotName: string) {
   const s = defaultSave()
   s.pilot.name = pilotName.trim().slice(0, 16) || 'Pilot'
-  const starter = STARTERS[element]
-  const slots: MechSetup['slots'] = {}
-  for (const [slot, id] of Object.entries(starter.mech)) slots[slot as SlotName] = grant(s, id!, 0, 1).uid
-  for (const id of starter.extras) grant(s, id, 0, 1)
-  s.mechs = [{ id: 'm1', name: STARTER_NAMES[element], slots }]
-  s.workshopMechs = [
-    {
-      id: 'w1',
-      name: 'Workshop Build',
-      slots: { ...starter.mech },
-    },
-  ]
+  s.mechs = [{ id: 'm1', name: 'Mech 1', slots: {} }]
+  s.workshopMechs = [{ id: 'w1', name: 'Workshop Build', slots: {} }]
   s.started = true
   s.daily.questDate = today()
   s.daily.quests = questsForDay(today())
   replaceSave(s)
+}
+
+// ---------------------------------------------------------------------------
+// Parts Depot and tutorial
+
+/** Buy one Common part from the depot. Returns the new item, or the reason it was refused. */
+export function buyPart(defId: string): ItemInstance | string {
+  const def = DEPOT_STOCK.find((d) => d.id === defId)
+  if (!def) return 'That part is not for sale.'
+  const block = purchaseBlock(save.value, def, getItem)
+  if (block) return block
+  let bought!: ItemInstance
+  update((s) => {
+    s.gold -= depotPrice(def)
+    bought = grant(s, def.id, 0, 1)
+  })
+  return bought
+}
+
+/** Close the tutorial once every step is done. Returns true when it just finished. */
+export function finishTutorial(): boolean {
+  const s = save.value
+  if (!tutorialActive(s) || !tutorialComplete(s)) return false
+  update((st) => {
+    st.tutorialDone = true
+    st.gold += TUTORIAL_REWARD.gold
+    st.kits.kit_s += TUTORIAL_REWARD.kitS
+  })
+  return true
+}
+
+/** Leave the tutorial early. No reward, and the depot's spending guard switches off. */
+export function skipTutorial() {
+  update((s) => {
+    s.tutorialDone = true
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -242,6 +216,7 @@ export function activeLoadoutValid(s: SaveData) {
 
 export function fuse(targetUid: string, fodderUids: string[], kits: Partial<Record<KitId, number>> = {}): { levels: number; xp: number } | string {
   const s = save.value
+  if (tutorialActive(s)) return 'Finish the tutorial first: you need every part you bought.'
   const target = findItem(s, targetUid)
   if (!target) return 'Item not found.'
   const def = getItem(target.defId)
@@ -297,6 +272,7 @@ export function doTransform(uid: string): string | null {
 
 export function sell(uids: string[]): number | string {
   const s = save.value
+  if (tutorialActive(s)) return 'Finish the tutorial first: you need every part you bought.'
   const equipped = equippedUids(s)
   let gold = 0
   for (const uid of uids) {

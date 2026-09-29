@@ -1,9 +1,11 @@
 import { useEffect } from 'preact/hooks'
 import { audio } from '../audio/audio'
 import { xpToLevel } from '../game/progress'
-import { claimableCount, loginRewardAvailable, save, update, refreshDaily } from '../game/store'
+import { claimableCount, finishTutorial, loginRewardAvailable, save, update, refreshDaily } from '../game/store'
+import { currentStep, tutorialActive, tutorialComplete } from '../game/tutorial'
 import { Gold, IconBase, IconFactory, IconGear, IconHelp, IconMech, IconQuests, IconShop, Token } from './icons'
 import { battle, go, modal, route, toasts, type Route } from './state'
+import { Coach } from './components/Coach'
 import { Arena } from './screens/Arena'
 import { BattleScreen } from './screens/Battle'
 import { Campaign } from './screens/Campaign'
@@ -11,7 +13,7 @@ import { Factory } from './screens/Factory'
 import { Hangar } from './screens/Hangar'
 import { Home } from './screens/Home'
 import { Intro } from './screens/Intro'
-import { HelpModal, LoginModal, SettingsModal } from './screens/Modals'
+import { HelpModal, LoginModal, SettingsModal, TutorialDoneModal } from './screens/Modals'
 import { Quests } from './screens/Quests'
 import { Shop } from './screens/Shop'
 import { Versus } from './screens/Versus'
@@ -72,16 +74,21 @@ function TopBar() {
   )
 }
 
+/** Nav button that leads to each tutorial destination (the campaign sits under Base). */
+const HINT_NAV: Record<string, Route> = { shop: 'shop', hangar: 'hangar', campaign: 'home' }
+
 function Nav() {
   const r = route.value
   const claim = claimableCount(save.value)
+  const step = tutorialActive(save.value) ? currentStep(save.value) : null
+  const hint = step && route.value !== step.target ? HINT_NAV[step.target] : null
   return (
     <nav class="nav" aria-label="Main">
       {NAV.map(({ id, label, Icon }) => {
         const on = r === id || (id === 'home' && ['campaign', 'arena', 'workshop', 'versus'].includes(r))
         return (
           <button
-            class={`sq${on ? ' on' : ''}`}
+            class={`sq${on ? ' on' : ''}${hint === id && !on ? ' hint' : ''}`}
             onClick={() => {
               audio.play('click')
               go(id)
@@ -132,12 +139,20 @@ export function App() {
     }
   }, [])
 
-  // Daily refresh and login popup once per session.
+  // Daily refresh and login popup once per session (held back until the tutorial is done).
   useEffect(() => {
     if (!s.started) return
     update(refreshDaily)
-    if (loginRewardAvailable(save.value)) setTimeout(() => (modal.value = modal.value ?? 'login'), 600)
-  }, [s.started])
+    if (s.tutorialDone && loginRewardAvailable(save.value)) setTimeout(() => (modal.value = modal.value ?? 'login'), 600)
+  }, [s.started, s.tutorialDone])
+
+  // The tutorial ends the moment its last step is done and the battle screen is closed.
+  useEffect(() => {
+    if (!b && tutorialActive(s) && tutorialComplete(s) && finishTutorial()) {
+      audio.play('levelUp')
+      modal.value = 'tutorialDone'
+    }
+  }, [s, b])
 
   useEffect(() => {
     const st = s.settings
@@ -169,6 +184,7 @@ export function App() {
               <Nav />
               <main class="main" id="main">
                 <div class="main-inner">
+                  <Coach />
                   <Screen />
                 </div>
               </main>
@@ -180,6 +196,7 @@ export function App() {
       {m === 'settings' && <SettingsModal />}
       {m === 'help' && <HelpModal />}
       {m === 'login' && !b && <LoginModal />}
+      {m === 'tutorialDone' && !b && <TutorialDoneModal />}
       <Toasts />
     </>
   )

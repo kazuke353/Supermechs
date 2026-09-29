@@ -8,6 +8,7 @@ import { activeMech, activeLoadoutValid, claimableCount, freeBoxAvailable, loado
 import { IconStar, IconWrench } from '../icons'
 import { sceneImage } from '../../battle/sceneImage'
 import { MechView } from '../components/MechView'
+import { currentStep, tutorialActive } from '../../game/tutorial'
 import { go } from '../state'
 
 export function mechVisual(slots: Partial<Record<SlotName, string>>, byDef = false): VisualLoadout {
@@ -43,12 +44,23 @@ export function Home() {
   const maxStars = CHAPTERS.length * 8 * 3
   const league = leagueOf(s.arena.rank)
   const claim = claimableCount(s)
+  const empty = Object.keys(loadout).length === 0
+  const step = tutorialActive(s) ? currentStep(s) : null
 
   return (
     <div class="home">
       <div class="showcase">
         <div class="scene-bg" style={{ backgroundImage: `url(${sceneImage(CHAPTERS[currentChapter(s.campaign)].scene, 1100)})` }} />
         <div class="showcase-stage">{mech && <MechView items={mechVisual(mech.slots)} fill={0.7} ground={0.78} />}</div>
+        {empty && (
+          <div class="empty-bay">
+            <b>Your bay is empty</b>
+            <span>Buy a torso, legs and weapons in the Shop’s Parts Depot, then fit them together in the Hangar.</span>
+            <button class="btn primary" onClick={() => go(step?.target === 'hangar' ? 'hangar' : 'shop')}>
+              {step?.target === 'hangar' ? 'Open the Hangar' : 'Open the Parts Depot'}
+            </button>
+          </div>
+        )}
         <div class="showcase-info">
           <div>
             <span class="label">Active mech</span>
@@ -77,7 +89,7 @@ export function Home() {
       </div>
 
       <div class="modes">
-        <button class="mode hero" style={{ '--mc': 'var(--gold-hi)', backgroundImage: `url(${sceneImage(CHAPTERS[currentChapter(s.campaign)].scene, 900)})` }} onClick={() => go('campaign')}>
+        <button class={`mode hero${step?.id === 'battle' ? ' hint' : ''}`} style={{ '--mc': 'var(--gold-hi)', backgroundImage: `url(${sceneImage(CHAPTERS[currentChapter(s.campaign)].scene, 900)})` }} onClick={() => go('campaign')}>
           <span class="label">Story</span>
           <h3>Campaign</h3>
           <p>

@@ -19,6 +19,13 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 - Six tiers from Common to Divine, each with its own level cap. Stats scale by tier and level.
 - Weight limit with an overload penalty.
 
+**Building your first mech**
+- You start with **1,200 gold and an empty hangar**. Nothing is handed to you.
+- A short guided tutorial has you buy a torso, legs and two weapons from the Shop, fit them together in the Hangar, then win mission 1-1.
+- The **Parts Depot** in the Shop sells every Common part for gold, always, so you choose exactly what to buy instead of relying on a random starter. Playstyle hints (Physical, Explosive, Electric) only mark a sample build you can afford.
+- The depot holds back enough gold for the essentials while the tutorial runs, so you cannot strand yourself with a drone and no torso. Finishing pays a small bonus.
+- The opening missions and lowest arena ranks field lean enemies that grow a few parts at a time, so a mech built from scratch has a fair fight.
+
 **Garage and Factory**
 - The garage works like SuperMechs: slots around the mech, an inventory grid with category tabs, a weight readout and stat previews.
 - Fuse spare parts for XP.
@@ -56,7 +63,7 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 - Synthesized sound effects and music.
 - Keyboard shortcuts and a phone layout.
 
-Progress saves in your browser. Export and import save codes from Settings to move a pilot between devices.
+Progress saves in your browser. Export and import save codes from Settings to move a pilot between devices. To replay the opening tutorial, use Settings → Reset progress.
 
 ## Play
 
@@ -71,6 +78,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Typecheck, then build the static site into `dist/` |
 | `npm run build:single` | Build the whole game as one self-contained HTML file in `dist-single/` |
+| `npm run build:artifact` | Same, for sandboxed embeds: online duels are switched off (peer-to-peer is blocked there) |
 | `npm test` | Run the engine, AI and meta-game tests (Vitest) |
 | `npm run typecheck` | TypeScript only |
 
@@ -98,7 +106,7 @@ Hover a weapon button to see its range on the floor.
 ```
 src/
   engine/   battle rules, stats, catalog, AI, loadout builder (no DOM)
-  game/     save data, economy, boxes, campaign, arena ladder, quests, store
+  game/     save data, economy, parts depot, tutorial, boxes, campaign, arena ladder, quests, store
   art/      procedural part painters and the mech composer
   battle/   battle scene (camera, tweens, particles), backdrops, controller
   audio/    synthesized SFX and music sequencer

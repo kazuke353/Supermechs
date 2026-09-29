@@ -6,7 +6,7 @@ import { IconClose, IconPlus } from '../icons'
 import { Garage } from '../components/Garage'
 import type { Candidate, SlotView } from '../components/loadout'
 import { mechVisual } from './Home'
-import { toast } from '../state'
+import { go, toast } from '../state'
 
 export function Hangar() {
   const s = save.value
@@ -71,7 +71,7 @@ export function Hangar() {
     <>
       <Garage
         title="Hangar"
-        subtitle="Pick a slot, then pick a part from your inventory. Stay at or under 1,000 kg to avoid the overweight penalty."
+        subtitle="Click a slot, pick a part from your inventory, then press Equip. Stay at or under 1,000 kg to avoid the overweight penalty."
         tabs={tabs}
         view={view}
         visual={mechVisual(mech.slots)}
@@ -80,7 +80,14 @@ export function Hangar() {
         counts={counts}
         current={(slot) => toCandidate(mech.slots[slot])}
         onEquip={(slot, key) => equip(idx, slot, key)}
-        emptyHint="Win missions or open boxes in the Shop to get more parts."
+        emptyHint={
+          <>
+            Buy one in the Shop’s Parts Depot, or win missions and open boxes.{' '}
+            <button class="btn small primary" onClick={() => go('shop')}>
+              Open the Depot
+            </button>
+          </>
+        }
       />
       {renaming && (
         <div class="modal-back">

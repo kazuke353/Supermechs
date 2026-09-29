@@ -4,7 +4,7 @@
  * arena buffs apply to both mechs, as in the original PvP.
  */
 import type { Difficulty } from '../engine/ai'
-import { generateLoadout } from '../engine/builder'
+import { generateLoadout, type BuildOptions } from '../engine/builder'
 import { Rng } from '../engine/rng'
 import type { Loadout, Tier } from '../engine/types'
 import type { ArenaState } from './save'
@@ -133,9 +133,24 @@ export function makeOpponent(rank: number, seed: number): ArenaOpponent {
     name,
     mechName: rng.pick(MECH_NAMES),
     rank: r,
-    loadout: generateLoadout(rng, { tier, level, maxStartTier: tier }),
+    loadout: generateLoadout(rng, { tier, level, maxStartTier: tier, ...bronzeSize(r) }),
     difficulty,
     seed,
+  }
+}
+
+/**
+ * Pilots build their first mech from scratch, so the lowest ranks field lean
+ * bots that fill out gradually. From rank 20 up the builder runs unrestricted.
+ */
+export function bronzeSize(rank: number): Partial<BuildOptions> {
+  if (rank <= 20) return {}
+  return {
+    modules: Math.round(2 + (30 - rank) * 0.6),
+    sides: rank > 25 ? 2 : undefined,
+    tops: rank > 27 ? 0 : rank > 23 ? 1 : undefined,
+    drone: rank > 27 ? false : undefined,
+    utilities: rank > 26 ? false : undefined,
   }
 }
 

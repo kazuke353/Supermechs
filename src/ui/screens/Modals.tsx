@@ -3,7 +3,8 @@ import { audio } from '../../audio/audio'
 import { exportCode, importCode, clearSave, defaultSave } from '../../game/save'
 import { describeReward } from '../../game/progress'
 import { claimLogin, loginRewardAvailable, replaceSave, save, storageOk, update, updateSettings } from '../../game/store'
-import { IconClose } from '../icons'
+import { TUTORIAL_REWARD } from '../../game/tutorial'
+import { Gold, IconClose, Kit } from '../icons'
 import { modal, toast } from '../state'
 import { LoginCalendar } from './Quests'
 
@@ -179,6 +180,11 @@ export function HelpModal() {
           <li>Charge engines dash next to the enemy and knock them back. Grappling hooks pull the enemy next to you. Teleporters move you anywhere and hurt the enemy if you land beside them.</li>
           <li>An active drone fires automatically at the end of each of your turns until it runs out of uses.</li>
         </ul>
+        <h3>Your first mech</h3>
+        <ul>
+          <li>You start with some gold and an empty hangar. Buy a torso, legs and weapons from the Shop’s Parts Depot, fit them in the Hangar, then win mission 1-1.</li>
+          <li>The depot sells every Common part for gold at all times, so you can fill gaps in your build without gambling on boxes.</li>
+        </ul>
         <h3>Building a mech</h3>
         <ul>
           <li>A mech needs a torso and legs, and can carry 4 side weapons, 2 top weapons, a drone, a charge engine, a teleporter, a grappling hook and 8 modules.</li>
@@ -225,6 +231,48 @@ export function LoginModal() {
           }}
         >
           Claim
+        </button>
+      </div>
+    </Shell>
+  )
+}
+
+export function TutorialDoneModal() {
+  const close = () => {
+    audio.play('click')
+    modal.value = loginRewardAvailable(save.value) ? 'login' : null
+  }
+  return (
+    <Shell title="Mech online!" onClose={close}>
+      <p>
+        You bought the parts, built the mech and won with it. That is the whole loop. Here is a little something for finishing:
+      </p>
+      <div class="row" style={{ margin: '14px 0', gap: 10 }}>
+        <span class="pill">
+          <Gold /> +{TUTORIAL_REWARD.gold}
+        </span>
+        <span class="pill">
+          <Kit /> +{TUTORIAL_REWARD.kitS} Small Power Kit
+        </span>
+      </div>
+      <h3>Where to next</h3>
+      <ul class="next-list">
+        <li>
+          <b>Campaign</b> pays gold and drops loot on the first clear of every mission. Each one gets a little tougher.
+        </li>
+        <li>
+          <b>Parts Depot</b> sells every Common part for gold, so you can add drones, modules and a third weapon as you earn.
+        </li>
+        <li>
+          <b>Factory</b> turns spare parts and power kits into levels. Max a part out, then transform it into the next tier.
+        </li>
+        <li>
+          <b>Shop</b> has a free Fortune Box every day, plus boxes with published odds if you fancy a gamble.
+        </li>
+      </ul>
+      <div class="row" style={{ justifyContent: 'center', marginTop: 16 }}>
+        <button class="btn primary big" onClick={close}>
+          Let’s go
         </button>
       </div>
     </Shell>

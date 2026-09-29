@@ -76,17 +76,21 @@ export interface SaveData {
   counter: number
 }
 
-export const SAVE_VERSION = 1
+/** 2: pilots start with an empty hangar and buy their first parts (older saves skip the tutorial). */
+export const SAVE_VERSION = 2
 const KEY = 'freemechs.save.v1'
+
+/** What a brand-new pilot can spend on their first mech. */
+export const STARTING_GOLD = 1200
 
 export function defaultSave(): SaveData {
   return {
     version: SAVE_VERSION,
     created: Date.now(),
     pilot: { name: 'Pilot', level: 1, xp: 0, color: 0 },
-    gold: 2500,
-    tokens: 150,
-    kits: { kit_s: 2, kit_m: 0, kit_l: 0 },
+    gold: STARTING_GOLD,
+    tokens: 0,
+    kits: { kit_s: 0, kit_m: 0, kit_l: 0 },
     inventory: [],
     mechs: [],
     activeMech: 0,
@@ -122,9 +126,12 @@ export function migrate(raw: unknown): SaveData {
   const base = defaultSave()
   if (!raw || typeof raw !== 'object') return base
   const r = raw as Partial<SaveData>
+  // Saves from before the buy-your-own-parts start already own a mech.
+  const legacy = (r.version ?? 1) < 2
   return {
     ...base,
     ...r,
+    tutorialDone: legacy ? true : (r.tutorialDone ?? false),
     pilot: { ...base.pilot, ...r.pilot },
     kits: { ...base.kits, ...r.kits },
     arena: { ...base.arena, ...r.arena },

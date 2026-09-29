@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:single": "vite build --mode single",
+    "build:artifact": "vite build --mode artifact",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -28,10 +28,10 @@ export interface Reward {
 }
 
 export const LOGIN_REWARDS: Reward[] = [
-  { gold: 1000 },
+  { gold: 400 },
   { kits: { kit_s: 2 } },
   { tokens: 40 },
-  { gold: 2500 },
+  { gold: 1500 },
   { kits: { kit_m: 1 } },
   { tokens: 80 },
   { box: 'fortune', tokens: 100 },

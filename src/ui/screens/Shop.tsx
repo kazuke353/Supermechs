@@ -1,3 +1,4 @@
+import { signal } from '@preact/signals'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { TIER_COLOR } from '../../art/palette'
 import { audio } from '../../audio/audio'
@@ -8,6 +9,7 @@ import { BOXES, type BoxDef } from '../../game/boxes'
 import { KITS, type KitId } from '../../game/economy'
 import { buyBox, buyKit, claimFreeBox, freeBoxAvailable, save, type BoxResult } from '../../game/store'
 import { Gold, IconClose, Kit, Token } from '../icons'
+import { Depot } from '../components/Depot'
 import { InstanceTile, TYPE_LABEL } from '../components/items'
 import { toast } from '../state'
 
@@ -210,8 +212,13 @@ function Opening({ box, result, onClose }: { box: BoxDef; result: BoxResult; onC
   )
 }
 
+type ShopTab = 'parts' | 'boxes' | 'kits'
+/** Remembered between visits so the shop reopens where you left it. */
+const shopTab = signal<ShopTab>('parts')
+
 export function Shop() {
   const s = save.value
+  const tab = shopTab.value
   const [opening, setOpening] = useState<{ box: BoxDef; result: BoxResult } | null>(null)
   const [oddsFor, setOddsFor] = useState<BoxDef | null>(null)
 
@@ -233,10 +240,27 @@ export function Shop() {
       <div class="screen-head">
         <div>
           <h1>Shop</h1>
-          <p>Every price is in-game currency you earn by playing. Odds are exact and pity timers guarantee a high-tier drop.</p>
+          <p>Every price is in-game currency you earn by playing. Pick parts straight from the depot, or gamble on boxes with published odds.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Shop sections">
+          {(
+            [
+              ['parts', 'Parts Depot'],
+              ['boxes', 'Boxes'],
+              ['kits', 'Power Kits'],
+            ] as [ShopTab, string][]
+          ).map(([id, label]) => (
+            <button key={id} class={`tab${tab === id ? ' on' : ''}`} role="tab" aria-selected={tab === id} onClick={() => (shopTab.value = id)}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {tab === 'parts' && <Depot />}
+
+      {tab === 'boxes' && (
+        <>
       <div class="panel" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,160px) minmax(0,1fr)', gap: 16, alignItems: 'center' }}>
         <div style={{ height: 130, position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0 }}>
@@ -285,7 +309,10 @@ export function Shop() {
           )
         })}
       </div>
+        </>
+      )}
 
+      {tab === 'kits' && (
       <div class="panel">
         <div class="panel-head">
           <h2>Power Kits</h2>
@@ -321,6 +348,7 @@ export function Shop() {
           ))}
         </div>
       </div>
+      )}
 
       {oddsFor && (
         <div class="modal-back" onClick={(e) => e.target === e.currentTarget && setOddsFor(null)}>

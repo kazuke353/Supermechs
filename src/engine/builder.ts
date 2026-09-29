@@ -20,6 +20,10 @@ export interface BuildOptions {
   sides?: number
   tops?: number
   drone?: boolean
+  /** Cap on filled module slots (default: fill toward the weight limit). */
+  modules?: number
+  /** Set to false to skip the charge engine, teleporter and grappling hook. */
+  utilities?: boolean
   weightCap?: number
   /** Restrict to items whose starting tier is <= this (for early-game enemies). */
   maxStartTier?: Tier
@@ -79,9 +83,11 @@ export function generateLoadout(rng: Rng, opts: BuildOptions): Loadout {
     for (let i = 0; i < nTops; i++) l[topSlots[i]] = r(preferElement(tops, el, rng))
 
     if (opts.drone ?? rng.chance(0.75)) l.drone = r(preferElement(pool('DRONE', opts), el, rng))
-    if (rng.chance(0.45)) l.charge = r(rng.pick(pool('CHARGE_ENGINE', opts)))
-    if (rng.chance(0.35)) l.teleporter = r(rng.pick(pool('TELEPORTER', opts)))
-    if (rng.chance(0.45)) l.hook = r(rng.pick(pool('GRAPPLING_HOOK', opts)))
+    if (opts.utilities !== false) {
+      if (rng.chance(0.45)) l.charge = r(rng.pick(pool('CHARGE_ENGINE', opts)))
+      if (rng.chance(0.35)) l.teleporter = r(rng.pick(pool('TELEPORTER', opts)))
+      if (rng.chance(0.45)) l.hook = r(rng.pick(pool('GRAPPLING_HOOK', opts)))
+    }
 
     // Trim weapons if we are already too heavy.
     const trimOrder: SlotName[] = ['teleporter', 'hook', 'charge', 'top2', 'side4', 'drone', 'side3', 'top1']
@@ -95,7 +101,8 @@ export function generateLoadout(rng: Rng, opts: BuildOptions): Loadout {
     const mods = pool('MODULE', opts)
     const resUsed = new Set<string>()
     let mi = 0
-    for (let tries = 0; tries < 40 && mi < MODULE_SLOTS.length; tries++) {
+    const maxMods = Math.min(MODULE_SLOTS.length, opts.modules ?? MODULE_SLOTS.length)
+    for (let tries = 0; tries < 40 && mi < maxMods; tries++) {
       const room = cap - loadoutWeight(l)
       const fits = mods.filter((m) => (m.stats.weight ?? 0) <= room)
       if (!fits.length) break
