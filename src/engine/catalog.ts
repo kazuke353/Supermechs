@@ -252,7 +252,8 @@ top('tp_wildfire', 'Wildfire Mortar', X, 'E-D', { weight: 50, dmg: [78, 483], he
 top('tp_starpouncer', 'Star Pouncer', X, 'L-D', { weight: 41, dmg: [215, 356], heaDmg: 38, expResDmg: 5, push: 1, advance: 3, range: [4, 8], uses: 2, heaCost: 100 }, 'pod', 2)
 top('tp_canopyburner', 'Canopy Burner', X, 'L-D', { weight: 27, dmg: [417, 691], heaDmg: 187, expResDmg: 12, push: 1, range: [7, 7], uses: 1, eneCost: 31, heaCost: 155 }, 'scope', 1)
 top('tp_scorchedscope', 'Scorched Scope', X, 'L-D', { weight: 30, dmg: [531, 852], heaDmg: 224, expResDmg: 15, range: [8, 8], backfire: 468, heaCost: 100 }, 'scope', 2)
-top('tp_meltdown', 'Meltdown Orb', X, 'L-D', { weight: 42, dmg: [36, 66], heaDmg: 415, range: [3, 6], uses: 1, backfire: 180, heaCost: 415 }, 'orb', 0)
+// One-shot heat pressure: meaningful impact without mirroring the target's heat onto the shooter.
+top('tp_meltdown', 'Meltdown Orb', X, 'L-D', { weight: 42, dmg: [180, 260], heaDmg: 415, range: [3, 6], uses: 1, backfire: 60, heaCost: 110 }, 'orb', 0)
 
 // Electric top weapons
 top('tp_ionmortar', 'Ion Mortar', E, 'C-E', { weight: 42, dmg: [160, 240], eneDmg: 50, range: [3, 6], uses: 3, eneCost: 35 }, 'artillery', 3)
