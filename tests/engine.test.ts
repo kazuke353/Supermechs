@@ -73,7 +73,7 @@ describe('turn structure', () => {
 describe('movement', () => {
   it('lets jumping legs move up to jump distance and hop over the enemy', () => {
     const { state } = battle(basic, basic, { positions: [4, 5] })
-    expect(walkablePositions(state)).toEqual([2, 3, 6])
+    expect(walkablePositions(state)).toEqual([2, 3, 6, 7])
   })
 
   it('stops non-jumping legs from passing the enemy', () => {
@@ -315,5 +315,19 @@ describe('mech building', () => {
       expect(i.stats.weight).toBeGreaterThan(0)
     }
     expect(ITEMS.length).toBeGreaterThan(180)
+  })
+})
+
+describe('jumping over the enemy', () => {
+  const jumper = { torso: 't_ironclad', legs: 'l_stompers', side1: 's_servicerifle' }
+  it('does not spend jump distance on the enemy tile', async () => {
+    const { walkablePositions } = await import('../src/engine/battle')
+    const at = (a: number, b: number) => walkablePositions(battle(jumper, jumper, { positions: [a, b], starter: 0 }).state, 0)
+    // Pinned against the edge with the enemy two tiles away: you can still get past.
+    expect(at(0, 2)).toContain(3)
+    expect(at(0, 1)).toEqual(expect.arrayContaining([2, 3]))
+    expect(at(9, 7)).toContain(6)
+    // Ordinary moves are unchanged.
+    expect(at(4, 8)).toEqual([2, 3, 5, 6])
   })
 })

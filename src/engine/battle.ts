@@ -295,10 +295,15 @@ export function walkablePositions(state: BattleState, side: Side = state.turn): 
   const jump = canJump(me)
   const dir = me.position < them.position ? 1 : -1
   const out: number[] = []
-  for (let p = Math.max(0, me.position - reach); p <= Math.min(MAX_POS, me.position + reach); p++) {
+  // Hopping over the enemy is free: their tile does not count toward the jump distance.
+  const span = reach + (jump ? 1 : 0)
+  for (let p = Math.max(0, me.position - span); p <= Math.min(MAX_POS, me.position + span); p++) {
     if (p === me.position || p === them.position) continue
+    const passes = (me.position - them.position) * (p - them.position) < 0
     // Without jumping you cannot pass the enemy.
     if (!jump && (p - them.position) * dir > 0) continue
+    const cost = Math.abs(p - me.position) - (passes ? 1 : 0)
+    if (cost > reach) continue
     out.push(p)
   }
   return out
