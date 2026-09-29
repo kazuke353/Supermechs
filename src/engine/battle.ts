@@ -738,13 +738,13 @@ function startTurn(state: BattleState, events: EventList) {
     const shutdown = f.heat - f.heaCol > f.heaCap
     const amount = Math.min(f.heat, f.heaCol * (shutdown ? 2 : 1))
     f.heat -= amount
+    state.actionsLeft = shutdown ? 0 : 1
     emit(state, events, { t: 'cooldown', player: side, amount, forced: shutdown ? 'shutdown' : 'overheat' })
     if (shutdown) {
       f.stats.shutdowns++
       passTurn(state, events)
       return
     }
-    state.actionsLeft = 1
   } else {
     state.actionsLeft = 2
   }
@@ -763,6 +763,8 @@ export function applyAction(state: BattleState, action: Action, opts?: ApplyOpti
   const events: EventList = []
   events.snap = !!opts?.snapshots
 
+  // Event snapshots must include the action spent, before any turn transition.
+  state.actionsLeft--
   switch (action.type) {
     case 'forfeit':
       finish(state, events, opponentOf(side), 'forfeit')
@@ -805,7 +807,6 @@ export function applyAction(state: BattleState, action: Action, opts?: ApplyOpti
   }
 
   if (checkDeath(state, events)) return events
-  state.actionsLeft--
   if (state.actionsLeft <= 0) endTurn(state, events, opts)
   return events
 }
