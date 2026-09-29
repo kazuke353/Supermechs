@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { audio } from '../../audio/audio'
 import { exportCode, importCode, clearSave, defaultSave } from '../../game/save'
+import { downloadPlayerJson } from '../../game/export'
 import { describeReward } from '../../game/progress'
 import { claimLogin, loginRewardAvailable, replaceSave, save, storageOk, update, updateSettings } from '../../game/store'
 import { TUTORIAL_REWARD } from '../../game/tutorial'
@@ -97,6 +98,24 @@ export function SettingsModal() {
         )}
       </div>
       {showExport && <textarea class="input" readOnly value={exported} style={{ marginTop: 8 }} onFocus={(e) => (e.target as HTMLTextAreaElement).select()} aria-label="Save code" />}
+      <button
+        class="btn small"
+        style={{ marginTop: 12 }}
+        onClick={() => {
+          try {
+            downloadPlayerJson(save.value)
+            toast('JSON download started', 'good')
+          } catch {
+            toast('Could not export player data. Please try again.', 'bad')
+          }
+        }}
+      >
+        Export data as JSON
+      </button>
+      <p class="muted" style={{ marginTop: 6 }}>
+        Download your pilot level, all hangar builds, item names and stats, mech totals, and campaign and arena progress.
+        Includes standard and arena stats. Use the save code above to restore progress.
+      </p>
       <label class="label" for="import-save" style={{ display: 'block', marginTop: 12 }}>
         Load a save code
       </label>
