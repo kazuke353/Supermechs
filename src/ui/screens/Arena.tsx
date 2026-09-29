@@ -166,7 +166,7 @@ export function Arena() {
               {LEAGUES.map((l) => {
                 const r = rankUpReward(l.to)
                 return (
-                  <tr style={{ borderTop: '1px solid var(--line)' }}>
+                  <tr style={{ borderTop: '1px solid #2e3238' }}>
                     <td style={{ padding: '8px', color: l.color, fontWeight: 700 }}>{l.name}</td>
                     <td class="num" style={{ padding: '8px' }}>
                       {l.from === 0 ? 'Legend' : `${l.from} → ${l.to}`}

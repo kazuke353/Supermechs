@@ -296,7 +296,7 @@ export function Factory() {
                     </button>
                   </div>
                   {nextTierStats && (
-                    <div class="panel" style={{ boxShadow: 'none', background: 'var(--panel-lo)' }}>
+                    <div class="panel" style={{ boxShadow: 'none', background: '#060708' }}>
                       <div class="panel-head" style={{ marginBottom: 8 }}>
                         <h3>
                           Transform to <TierLabel tier={(sel.tier + 1) as Tier} />

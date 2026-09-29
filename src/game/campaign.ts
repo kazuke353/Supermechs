@@ -6,7 +6,7 @@ import { TIER_MAX_LEVEL } from '../engine/stats'
 import type { Element, Loadout, SlotName, Tier } from '../engine/types'
 import { dropPool } from './boxes'
 
-export type SceneId = 'scrapyard' | 'dunes' | 'magma' | 'storm' | 'citadel' | 'rift' | 'arena' | 'workshop'
+export type SceneId = 'forest' | 'scrapyard' | 'dunes' | 'magma' | 'storm' | 'citadel' | 'rift' | 'arena' | 'workshop'
 
 export interface MissionReward {
   gold: number
@@ -55,9 +55,9 @@ interface ChapterSpec {
 
 const SPECS: ChapterSpec[] = [
   {
-    name: 'Scrapyard Outskirts',
-    blurb: 'Rogue salvage bots are stripping the old junkyards. Learn the ropes and take them down.',
-    scene: 'scrapyard',
+    name: 'Overgrown Outpost',
+    blurb: 'Rogue salvage bots are stripping the abandoned forest outposts. Learn the ropes and take them down.',
+    scene: 'forest',
     tier: 0,
     missionNames: ['First Steps', 'Rust Buckets', 'Scrap Patrol', 'Crusher Lane', 'The Heap', 'Magnet Crane', 'Salvage Rights', 'Junk King'],
     enemies: ['Scrapper', 'Rustbolt', 'Tin Guard', 'Crusher', 'Heap Rat', 'Crane Bot', 'Salvager'],
@@ -80,8 +80,8 @@ const SPECS: ChapterSpec[] = [
     diff: ['easy', 'easy', 'normal'],
   },
   {
-    name: 'Rust Dunes',
-    blurb: 'Raiders roam the desert on heavy treads. Their armor shrugs off light fire.',
+    name: 'Red Canyon',
+    blurb: 'Raiders roam the canyon on heavy treads. Their armor shrugs off light fire.',
     scene: 'dunes',
     tier: 1,
     element: 'PHYSICAL',
@@ -136,8 +136,8 @@ const SPECS: ChapterSpec[] = [
     diff: ['normal', 'normal', 'hard'],
   },
   {
-    name: 'Storm Peaks',
-    blurb: 'Lightning towers feed a machine army. They drain your energy and fry your circuits.',
+    name: 'Frozen Peaks',
+    blurb: 'Lightning towers on the glacier feed a machine army. They drain your energy and fry your circuits.',
     scene: 'storm',
     tier: 3,
     element: 'ELECTRIC',

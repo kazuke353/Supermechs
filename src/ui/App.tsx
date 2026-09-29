@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks'
 import { audio } from '../audio/audio'
 import { xpToLevel } from '../game/progress'
 import { claimableCount, loginRewardAvailable, save, update, refreshDaily } from '../game/store'
-import { Gold, IconFactory, IconGear, IconHelp, IconHome, IconMech, IconQuests, IconShop, Token } from './icons'
+import { Gold, IconBase, IconFactory, IconGear, IconHelp, IconMech, IconQuests, IconShop, Token } from './icons'
 import { battle, go, modal, route, toasts, type Route } from './state'
 import { Arena } from './screens/Arena'
 import { BattleScreen } from './screens/Battle'
@@ -18,7 +18,7 @@ import { Versus } from './screens/Versus'
 import { Workshop } from './screens/Workshop'
 
 const NAV: { id: Route; label: string; Icon: (p: preact.JSX.SVGAttributes<SVGSVGElement>) => preact.JSX.Element }[] = [
-  { id: 'home', label: 'Home', Icon: IconHome },
+  { id: 'home', label: 'Base', Icon: IconBase },
   { id: 'hangar', label: 'Hangar', Icon: IconMech },
   { id: 'factory', label: 'Factory', Icon: IconFactory },
   { id: 'shop', label: 'Shop', Icon: IconShop },
@@ -40,32 +40,29 @@ const SCREENS: Record<Route, () => preact.JSX.Element | null> = {
 function TopBar() {
   const s = save.value
   const need = xpToLevel(s.pilot.level)
-  const pct = Math.round((s.pilot.xp / need) * 100)
+  const pct = Math.min(100, (s.pilot.xp / need) * 100)
   return (
     <header class="topbar">
       <span class="brand">
         FREE<b>MECHS</b>
       </span>
-      <div class="pilot">
-        <div class="lvl-ring" style={{ '--p': pct }} title={`Level ${s.pilot.level}: ${s.pilot.xp}/${need} XP`}>
-          <span>{s.pilot.level}</span>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div class="pilot-name">{s.pilot.name}</div>
-          <div class="pilot-sub num">
-            {s.pilot.xp}/{need} XP
-          </div>
+      <span class="money gold" title="Gold">
+        <Gold /> {s.gold.toLocaleString()}
+      </span>
+      <span class="money tok" title="Tokens">
+        <Token /> {s.tokens.toLocaleString()}
+      </span>
+      <div class="xp" title={`Pilot level ${s.pilot.level}`}>
+        <span class="lvl">LV {s.pilot.level}</span>
+        <div class="xp-bar">
+          <i style={{ width: `${pct}%` }} />
+          <span>
+            {s.pilot.xp.toLocaleString()} / {need.toLocaleString()} XP
+          </span>
         </div>
       </div>
-      <div class="wallet">
-        <span class="pill" title="Gold">
-          <Gold /> {s.gold.toLocaleString()}
-        </span>
-        <span class="pill" title="Tokens">
-          <Token /> {s.tokens.toLocaleString()}
-        </span>
-      </div>
-      <button class="icon-btn" onClick={() => (modal.value = 'help')} aria-label="How to play" title="How to play">
+      <span class="pilot-name">{s.pilot.name}</span>
+      <button class="icon-btn blue" onClick={() => (modal.value = 'help')} aria-label="How to play" title="How to play">
         <IconHelp />
       </button>
       <button class="icon-btn" onClick={() => (modal.value = 'settings')} aria-label="Settings" title="Settings">
@@ -80,20 +77,24 @@ function Nav() {
   const claim = claimableCount(save.value)
   return (
     <nav class="nav" aria-label="Main">
-      {NAV.map(({ id, label, Icon }) => (
-        <button
-          class={r === id || (id === 'home' && ['campaign', 'arena', 'workshop', 'versus'].includes(r)) ? 'on' : ''}
-          onClick={() => {
-            audio.play('click')
-            go(id)
-          }}
-          aria-current={r === id ? 'page' : undefined}
-        >
-          <Icon />
-          {label}
-          {id === 'quests' && claim > 0 && <span class="badge">{claim}</span>}
-        </button>
-      ))}
+      {NAV.map(({ id, label, Icon }) => {
+        const on = r === id || (id === 'home' && ['campaign', 'arena', 'workshop', 'versus'].includes(r))
+        return (
+          <button
+            class={`sq${on ? ' on' : ''}`}
+            onClick={() => {
+              audio.play('click')
+              go(id)
+            }}
+            aria-current={r === id ? 'page' : undefined}
+            aria-label={label}
+          >
+            <Icon />
+            {label}
+            {id === 'quests' && claim > 0 && <span class="badge">{claim}</span>}
+          </button>
+        )
+      })}
     </nav>
   )
 }
@@ -145,10 +146,14 @@ export function App() {
 
   if (!s.started) {
     return (
-      <>
-        <Intro />
+      <div class="console">
+        <div class="bezel">
+          <div class="screen">
+            <Intro />
+          </div>
+        </div>
         <Toasts />
-      </>
+      </div>
     )
   }
 
@@ -156,14 +161,20 @@ export function App() {
 
   return (
     <>
-      <div class="shell">
-        <TopBar />
-        <Nav />
-        <main class="main" id="main">
-          <div class="main-inner">
-            <Screen />
+      <div class="console">
+        <div class="bezel">
+          <div class="screen">
+            <div class="shell">
+              <TopBar />
+              <Nav />
+              <main class="main" id="main">
+                <div class="main-inner">
+                  <Screen />
+                </div>
+              </main>
+            </div>
           </div>
-        </main>
+        </div>
       </div>
       {b && <BattleScreen session={b} key={b.controller.setup.seed} />}
       {m === 'settings' && <SettingsModal />}

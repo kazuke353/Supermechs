@@ -47,3 +47,17 @@ if (mode === 'items') {
     drawMech(ctx, vis, x, y, 0.95, { facing: i % 2 === 0 ? 1 : -1, droneActive: true })
   })
 }
+
+if (mode === 'bg') {
+  import('../battle/sceneImage').then(({ sceneImage }) => {
+    const wrap = document.createElement('div')
+    wrap.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px'
+    for (const id of ['forest', 'dunes', 'storm', 'magma', 'citadel', 'rift', 'arena', 'workshop', 'scrapyard'] as const) {
+      const img = new Image()
+      img.src = sceneImage(id, 700)
+      img.style.width = '100%'
+      wrap.append(img)
+    }
+    document.body.append(wrap)
+  })
+}

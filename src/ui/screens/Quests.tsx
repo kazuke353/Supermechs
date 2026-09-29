@@ -24,7 +24,7 @@ export function LoginCalendar() {
           <span class="label">Day {i + 1}</span>
           <RewardIcon r={r} />
           <span style={{ fontWeight: 700 }}>{describeReward(r)}</span>
-          {i <= claimedThrough && <IconCheck style={{ width: 16, height: 16, color: 'var(--good)' }} />}
+          {i <= claimedThrough && <IconCheck style={{ width: 16, height: 16, color: 'var(--led)' }} />}
         </div>
       ))}
     </div>

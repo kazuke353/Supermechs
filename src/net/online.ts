@@ -226,5 +226,7 @@ export class OnlineSession {
 
 /** WebRTC is required; some embedded sandboxes block it. */
 export function webrtcSupported(): boolean {
+  // Sandboxed embeds block both WebRTC and the PeerJS signalling server.
+  if (import.meta.env.VITE_EMBED) return false
   return typeof RTCPeerConnection !== 'undefined'
 }

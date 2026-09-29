@@ -1,21 +1,19 @@
 import { useState } from 'preact/hooks'
-import { audio } from '../../audio/audio'
 import { getItem } from '../../engine/catalog'
-import { loadoutWeight, powerRating } from '../../engine/mech'
-import { SLOT_NAMES, SLOT_TYPE, type SlotName } from '../../engine/types'
+import { SLOT_NAMES, SLOT_TYPE, type ItemType, type SlotName } from '../../engine/types'
 import { addMech, deleteMech, equip, findItem, loadoutOf, MAX_MECHS, renameMech, resolveInstance, save, setActiveMech } from '../../game/store'
 import { IconClose, IconPlus } from '../icons'
-import { MechView } from '../components/MechView'
-import { MechStats, Picker, SlotGrid, type Candidate, type SlotView } from '../components/loadout'
+import { Garage } from '../components/Garage'
+import type { Candidate, SlotView } from '../components/loadout'
 import { mechVisual } from './Home'
-import { go, toast } from '../state'
+import { toast } from '../state'
 
 export function Hangar() {
   const s = save.value
   const idx = Math.min(s.activeMech, s.mechs.length - 1)
   const mech = s.mechs[idx]
-  const [picking, setPicking] = useState<SlotName | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [renaming, setRenaming] = useState(false)
   if (!mech) return null
   const loadout = loadoutOf(s, mech)
 
@@ -25,90 +23,93 @@ export function Hangar() {
     if (it) view[slot] = { def: getItem(it.defId), tier: it.tier, level: it.level, locked: it.locked }
   }
 
-  let picker = null
-  if (picking) {
-    const type = SLOT_TYPE[picking]
-    const usedHere = new Set(Object.entries(mech.slots).filter(([k]) => k !== picking).map(([, v]) => v))
-    const candidates: Candidate[] = s.inventory
-      .filter((i) => getItem(i.defId).type === type && !usedHere.has(i.uid))
-      .map((i) => ({ key: i.uid, def: getItem(i.defId), tier: i.tier, level: i.level, stats: resolveInstance(i).stats, locked: i.locked }))
-    const curIt = findItem(s, mech.slots[picking])
-    const current: Candidate | null = curIt ? { key: curIt.uid, def: getItem(curIt.defId), tier: curIt.tier, level: curIt.level, stats: resolveInstance(curIt).stats } : null
-    const without = { ...loadout }
-    delete without[picking]
-    picker = (
-      <Picker
-        slot={picking}
-        current={current}
-        candidates={candidates}
-        baseWeight={loadoutWeight(without)}
-        onClose={() => setPicking(null)}
-        onEquip={(uid) => {
-          equip(idx, picking, uid)
-          audio.play('equip')
-          setPicking(null)
-        }}
-      />
-    )
+  const counts: Partial<Record<ItemType, number>> = {}
+  for (const i of s.inventory) {
+    const t = getItem(i.defId).type
+    counts[t] = (counts[t] ?? 0) + 1
   }
+
+  const toCandidate = (uid: string | undefined): Candidate | null => {
+    const it = findItem(s, uid)
+    return it ? { key: it.uid, def: getItem(it.defId), tier: it.tier, level: it.level, stats: resolveInstance(it).stats, locked: it.locked } : null
+  }
+
+  const candidates = (slot: SlotName): Candidate[] => {
+    const type = SLOT_TYPE[slot]
+    const usedElsewhere = new Set(
+      Object.entries(mech.slots)
+        .filter(([k]) => k !== slot)
+        .map(([, v]) => v),
+    )
+    return s.inventory.filter((i) => getItem(i.defId).type === type && !usedElsewhere.has(i.uid)).map((i) => toCandidate(i.uid)!)
+  }
+
+  const tabs = (
+    <div class="mech-tabs">
+      {s.mechs.map((m, i) => (
+        <button class={`tab${i === idx ? ' on' : ''}`} onClick={() => setActiveMech(i)} aria-pressed={i === idx}>
+          {m.name}
+        </button>
+      ))}
+      {s.mechs.length < MAX_MECHS && (
+        <button class="tab" onClick={() => addMech()} aria-label="Add mech">
+          <IconPlus style={{ width: 14, height: 14, verticalAlign: '-2px' }} /> New
+        </button>
+      )}
+      <button class="btn small" onClick={() => setRenaming(true)}>
+        Rename
+      </button>
+      {s.mechs.length > 1 && (
+        <button class="btn small ghost" onClick={() => setConfirmDelete(true)}>
+          Delete
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <>
-      <div class="screen-head">
-        <div>
-          <h1>Hangar</h1>
-          <p>Tap a slot to swap parts. Keep the mech at or under 1,000 kg to avoid the overweight penalty.</p>
-        </div>
-        <div class="mech-tabs">
-          {s.mechs.map((m, i) => (
-            <button class={`tab${i === idx ? ' on' : ''}`} onClick={() => setActiveMech(i)} aria-pressed={i === idx}>
-              {m.name}
-            </button>
-          ))}
-          {s.mechs.length < MAX_MECHS && (
-            <button class="tab" onClick={() => addMech()} aria-label="Add mech">
-              <IconPlus style={{ width: 14, height: 14, verticalAlign: '-2px' }} /> New
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div class="hangar">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          <div class="bay">
-            <MechView items={mechVisual(mech.slots)} fill={0.84} />
-          </div>
-          <div class="panel">
-            <SlotGrid view={view} onPick={setPicking} />
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          <div class="panel">
-            <div class="field" style={{ width: '100%', marginBottom: 12 }}>
-              <label class="label" for="mech-name">
-                Mech name
-              </label>
-              <input id="mech-name" class="input" maxLength={20} value={mech.name} onChange={(e) => renameMech(idx, (e.target as HTMLInputElement).value)} />
-            </div>
-            <div class="row" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
-              <span class="label">Power rating</span>
-              <b class="num">{powerRating(loadout).toLocaleString()}</b>
-            </div>
-            <MechStats loadout={loadout} />
-          </div>
-          <div class="row">
-            <button class="btn grow" onClick={() => go('factory')}>
-              Upgrade parts
-            </button>
-            {s.mechs.length > 1 && (
-              <button class="btn ghost" onClick={() => setConfirmDelete(true)}>
-                Delete mech
+      <Garage
+        title="Hangar"
+        subtitle="Pick a slot, then pick a part from your inventory. Stay at or under 1,000 kg to avoid the overweight penalty."
+        tabs={tabs}
+        view={view}
+        visual={mechVisual(mech.slots)}
+        loadout={loadout}
+        candidates={candidates}
+        counts={counts}
+        current={(slot) => toCandidate(mech.slots[slot])}
+        onEquip={(slot, key) => equip(idx, slot, key)}
+        emptyHint="Win missions or open boxes in the Shop to get more parts."
+      />
+      {renaming && (
+        <div class="modal-back">
+          <div class="modal narrow" role="dialog" aria-label="Rename mech">
+            <div class="modal-head">
+              <h2>Rename mech</h2>
+              <button class="icon-btn" onClick={() => setRenaming(false)} aria-label="Close">
+                <IconClose />
               </button>
-            )}
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const v = (new FormData(e.currentTarget as HTMLFormElement).get('name') as string) ?? ''
+                renameMech(idx, v)
+                setRenaming(false)
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+            >
+              <input id="mech-name" name="name" class="input" maxLength={20} defaultValue={mech.name} autoFocus />
+              <div class="row" style={{ justifyContent: 'flex-end' }}>
+                <button type="submit" class="btn primary">
+                  Save
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
-      {picker}
+      )}
       {confirmDelete && (
         <div class="modal-back">
           <div class="modal narrow" role="dialog" aria-label="Delete mech">

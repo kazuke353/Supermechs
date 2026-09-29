@@ -147,7 +147,7 @@ export function OnlinePanel() {
               {status === 'waiting' ? (
                 <div class="row">
                   <span class="label">Room code</span>
-                  <b style={{ fontFamily: 'var(--font-display)', fontSize: 28, letterSpacing: '0.2em', color: 'var(--amber)' }}>{net.current?.code.value}</b>
+                  <b style={{ fontFamily: 'var(--font-display)', fontSize: 28, letterSpacing: '0.2em', color: 'var(--gold-hi)' }}>{net.current?.code.value}</b>
                   <button class="btn small" onClick={copy}>
                     Copy
                   </button>
@@ -161,7 +161,7 @@ export function OnlinePanel() {
               </button>
             </div>
           )}
-          {status === 'error' && <p style={{ color: 'var(--bad)', fontWeight: 600 }}>{net.current?.error.value}</p>}
+          {status === 'error' && <p style={{ color: 'var(--red-hi)', fontWeight: 600 }}>{net.current?.error.value}</p>}
         </>
       )}
     </div>

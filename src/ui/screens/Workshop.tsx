@@ -3,22 +3,29 @@ import { audio } from '../../audio/audio'
 import type { Difficulty } from '../../engine/ai'
 import { generateLoadout } from '../../engine/builder'
 import { ITEMS, getItem } from '../../engine/catalog'
-import { loadoutWeight, resolveItem, validateLoadout } from '../../engine/mech'
+import { resolveItem, validateLoadout } from '../../engine/mech'
 import { randomSeed, Rng } from '../../engine/rng'
 import { TIER_MAX_LEVEL, TIER_NAMES } from '../../engine/stats'
-import { SLOT_NAMES, SLOT_TYPE, type SlotName, type Tier } from '../../engine/types'
-import { addMech, deleteMech, renameMech, save, setWorkshopSlot, update, workshopLoadout } from '../../game/store'
+import { SLOT_NAMES, SLOT_TYPE, type ItemDef, type ItemType, type SlotName, type Tier } from '../../engine/types'
+import { addMech, deleteMech, save, setWorkshopSlot, update, workshopLoadout } from '../../game/store'
 import { IconPlus } from '../icons'
-import { MechView } from '../components/MechView'
-import { MechStats, Picker, SlotGrid, type Candidate, type SlotView } from '../components/loadout'
+import { Garage } from '../components/Garage'
+import type { Candidate, SlotView } from '../components/loadout'
 import { randomBot, startCustom } from '../launch'
 import { mechVisual } from './Home'
 import { toast } from '../state'
 
+function maxed(d: ItemDef): Candidate {
+  const lvl = TIER_MAX_LEVEL[d.maxTier]
+  return { key: d.id, def: d, tier: d.maxTier, level: lvl, stats: resolveItem(d, d.maxTier, lvl).stats }
+}
+
+const COUNTS: Partial<Record<ItemType, number>> = {}
+for (const d of ITEMS) COUNTS[d.type] = (COUNTS[d.type] ?? 0) + 1
+
 export function Workshop() {
   const s = save.value
   const [idx, setIdx] = useState(0)
-  const [picking, setPicking] = useState<SlotName | null>(null)
   const [oppKind, setOppKind] = useState<'bot' | 'build'>('bot')
   const [tier, setTier] = useState<Tier>(5)
   const [diff, setDiff] = useState<Difficulty>('hard')
@@ -47,40 +54,6 @@ export function Workshop() {
     view[slot] = { def, tier: def.maxTier, level: TIER_MAX_LEVEL[def.maxTier] }
   }
 
-  let picker = null
-  if (picking) {
-    const type = SLOT_TYPE[picking]
-    const candidates: Candidate[] = ITEMS.filter((d) => d.type === type).map((d) => ({
-      key: d.id,
-      def: d,
-      tier: d.maxTier,
-      level: TIER_MAX_LEVEL[d.maxTier],
-      stats: resolveItem(d, d.maxTier, TIER_MAX_LEVEL[d.maxTier]).stats,
-      note: d.tags?.boss ? 'Boss part' : d.lore,
-    }))
-    const curId = mech.slots[picking]
-    const curDef = curId ? getItem(curId) : null
-    const current: Candidate | null = curDef
-      ? { key: curDef.id, def: curDef, tier: curDef.maxTier, level: TIER_MAX_LEVEL[curDef.maxTier], stats: resolveItem(curDef, curDef.maxTier, TIER_MAX_LEVEL[curDef.maxTier]).stats }
-      : null
-    const without = { ...loadout }
-    delete without[picking]
-    picker = (
-      <Picker
-        slot={picking}
-        current={current}
-        candidates={candidates}
-        baseWeight={loadoutWeight(without)}
-        onClose={() => setPicking(null)}
-        onEquip={(id) => {
-          setWorkshopSlot(i, picking, id)
-          audio.play('equip')
-          setPicking(null)
-        }}
-      />
-    )
-  }
-
   const randomize = () => {
     const rng = new Rng(randomSeed())
     const l = generateLoadout(rng, { tier: 5, boss: true })
@@ -107,117 +80,108 @@ export function Workshop() {
     startCustom(p0, p1, { scene: 'workshop', arena, title: 'Workshop Test', returnTo: 'workshop', trackStats: false })
   }
 
+  const tabs = (
+    <div class="mech-tabs">
+      {mechs.map((m, k) => (
+        <button class={`tab${k === i ? ' on' : ''}`} onClick={() => setIdx(k)}>
+          {m.name}
+        </button>
+      ))}
+      <button
+        class="tab"
+        onClick={() => {
+          addMech(true)
+          setIdx(mechs.length)
+        }}
+      >
+        <IconPlus style={{ width: 14, height: 14, verticalAlign: '-2px' }} /> New
+      </button>
+      <button class="btn small blue" onClick={randomize}>
+        Random build
+      </button>
+      <button class="btn small ghost" onClick={() => update((st) => (st.workshopMechs[i].slots = {}))}>
+        Clear
+      </button>
+      {mechs.length > 1 && (
+        <button
+          class="btn small ghost"
+          onClick={() => {
+            deleteMech(i, true)
+            setIdx(0)
+          }}
+        >
+          Delete
+        </button>
+      )}
+    </div>
+  )
+
+  const side = (
+    <div class="panel" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <h3>Test battle</h3>
+      <div class="tabs">
+        <button class={`tab${oppKind === 'bot' ? ' on' : ''}`} onClick={() => setOppKind('bot')}>
+          Random bot
+        </button>
+        <button class={`tab${oppKind === 'build' ? ' on' : ''}`} onClick={() => setOppKind('build')}>
+          One of my builds
+        </button>
+      </div>
+      <div class="row">
+        {oppKind === 'bot' ? (
+          <label class="row" style={{ gap: 6 }}>
+            <span class="label">Bot gear</span>
+            <select class="select" value={tier} onChange={(e) => setTier(Number((e.target as HTMLSelectElement).value) as Tier)}>
+              {TIER_NAMES.map((n, t) => (
+                <option value={t}>{n}</option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label class="row" style={{ gap: 6 }}>
+            <span class="label">Opponent</span>
+            <select class="select" value={oppIdx} onChange={(e) => setOppIdx(Number((e.target as HTMLSelectElement).value))}>
+              {mechs.map((m, k) => (
+                <option value={k}>{m.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label class="row" style={{ gap: 6 }}>
+          <span class="label">AI skill</span>
+          <select class="select" value={diff} onChange={(e) => setDiff((e.target as HTMLSelectElement).value as Difficulty)}>
+            <option value="easy">Rookie</option>
+            <option value="normal">Veteran</option>
+            <option value="hard">Elite</option>
+            <option value="boss">Boss</option>
+          </select>
+        </label>
+        <label class="row" style={{ gap: 6 }}>
+          <input type="checkbox" checked={arena} onChange={(e) => setArena((e.target as HTMLInputElement).checked)} /> <span class="label">Arena buffs</span>
+        </label>
+      </div>
+      <button class="btn primary big" onClick={fight}>
+        Start test battle
+      </button>
+    </div>
+  )
+
   return (
-    <>
-      <div class="screen-head">
-        <div>
-          <h1>Workshop</h1>
-          <p>Every part in the game, fully upgraded. Design builds and test them against bots. Workshop battles give no rewards.</p>
-        </div>
-        <div class="mech-tabs">
-          {mechs.map((m, k) => (
-            <button class={`tab${k === i ? ' on' : ''}`} onClick={() => setIdx(k)}>
-              {m.name}
-            </button>
-          ))}
-          <button
-            class="tab"
-            onClick={() => {
-              addMech(true)
-              setIdx(mechs.length)
-            }}
-          >
-            <IconPlus style={{ width: 14, height: 14, verticalAlign: '-2px' }} /> New
-          </button>
-        </div>
-      </div>
-      <div class="hangar">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          <div class="bay">
-            <MechView items={mechVisual(mech.slots, true)} fill={0.84} />
-          </div>
-          <div class="panel">
-            <SlotGrid view={view} onPick={setPicking} />
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          <div class="panel">
-            <div class="field" style={{ width: '100%', marginBottom: 12 }}>
-              <label class="label" for="build-name">
-                Build name
-              </label>
-              <input id="build-name" class="input" maxLength={20} value={mech.name} onChange={(e) => renameMech(i, (e.target as HTMLInputElement).value, true)} />
-            </div>
-            <MechStats loadout={loadout} />
-            <div class="row" style={{ marginTop: 12 }}>
-              <button class="btn small" onClick={randomize}>
-                Random build
-              </button>
-              <button class="btn small ghost" onClick={() => update((st) => (st.workshopMechs[i].slots = {}))}>
-                Clear
-              </button>
-              {mechs.length > 1 && (
-                <button
-                  class="btn small ghost"
-                  onClick={() => {
-                    deleteMech(i, true)
-                    setIdx(0)
-                  }}
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-          <div class="panel" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <h3>Test battle</h3>
-            <div class="tabs">
-              <button class={`tab${oppKind === 'bot' ? ' on' : ''}`} onClick={() => setOppKind('bot')}>
-                Random bot
-              </button>
-              <button class={`tab${oppKind === 'build' ? ' on' : ''}`} onClick={() => setOppKind('build')}>
-                One of my builds
-              </button>
-            </div>
-            {oppKind === 'bot' ? (
-              <label class="row">
-                <span class="grow">Bot gear</span>
-                <select class="select" value={tier} onChange={(e) => setTier(Number((e.target as HTMLSelectElement).value) as Tier)}>
-                  {TIER_NAMES.map((n, t) => (
-                    <option value={t}>{n}</option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <label class="row">
-                <span class="grow">Opponent build</span>
-                <select class="select" value={oppIdx} onChange={(e) => setOppIdx(Number((e.target as HTMLSelectElement).value))}>
-                  {mechs.map((m, k) => (
-                    <option value={k}>{m.name}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <label class="row">
-              <span class="grow">AI skill</span>
-              <select class="select" value={diff} onChange={(e) => setDiff((e.target as HTMLSelectElement).value as Difficulty)}>
-                <option value="easy">Rookie</option>
-                <option value="normal">Veteran</option>
-                <option value="hard">Elite</option>
-                <option value="boss">Boss</option>
-              </select>
-            </label>
-            <label class="switch" style={{ borderBottom: 0 }}>
-              <span>Arena buffs</span>
-              <input type="checkbox" checked={arena} onChange={(e) => setArena((e.target as HTMLInputElement).checked)} />
-            </label>
-            <button class="btn primary" onClick={fight}>
-              Start test battle
-            </button>
-          </div>
-        </div>
-      </div>
-      {picker}
-    </>
+    <Garage
+      title="Workshop"
+      subtitle="Every part in the game, fully upgraded. Design builds and test them against bots. Workshop battles give no rewards."
+      tabs={tabs}
+      view={view}
+      visual={mechVisual(mech.slots, true)}
+      loadout={loadout}
+      candidates={(slot) => ITEMS.filter((d) => d.type === SLOT_TYPE[slot]).map(maxed)}
+      counts={COUNTS}
+      current={(slot) => {
+        const id = mech.slots[slot]
+        return id ? maxed(getItem(id)) : null
+      }}
+      onEquip={(slot, key) => setWorkshopSlot(i, slot, key)}
+      side={side}
+    />
   )
 }

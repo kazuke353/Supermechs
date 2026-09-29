@@ -9,6 +9,7 @@ import { activeMech, loadoutOf, save } from '../../game/store'
 import { Gold, IconClose, IconLock, IconStar, Token, Xp } from '../icons'
 import { ItemTile } from '../components/items'
 import { MechView } from '../components/MechView'
+import { sceneImage } from '../../battle/sceneImage'
 import { startMission } from '../launch'
 
 const DIFF_LABEL = { easy: 'Rookie AI', normal: 'Veteran AI', hard: 'Elite AI', boss: 'Boss AI' } as const
@@ -103,7 +104,7 @@ function MissionModal({ m, onClose }: { m: Mission; onClose: () => void }) {
                 </div>
               </div>
             )}
-            <p class="num" style={{ fontSize: 13, color: myPower >= theirPower ? 'var(--good)' : 'var(--warn)' }}>
+            <p class="num" style={{ fontSize: 13, color: myPower >= theirPower ? 'var(--led)' : 'var(--gold-hi)', fontWeight: 800 }}>
               Your power {myPower.toLocaleString()} vs {theirPower.toLocaleString()}
               {myPower < theirPower * 0.85 ? ' · consider upgrading first' : ''}
             </p>
@@ -143,7 +144,13 @@ export function Campaign() {
           const unlocked = isUnlocked(s.campaign, c.missions[0])
           const st = chapterStars(s.campaign, c)
           return (
-            <button class={`chapter${i === ci ? ' on' : ''}${unlocked ? '' : ' locked'}`} onClick={() => unlocked && setCi(i)} aria-pressed={i === ci} disabled={!unlocked}>
+            <button
+              class={`chapter${i === ci ? ' on' : ''}${unlocked ? '' : ' locked'}`}
+              style={{ backgroundImage: `url(${sceneImage(c.scene, 520)})` }}
+              onClick={() => unlocked && setCi(i)}
+              aria-pressed={i === ci}
+              disabled={!unlocked}
+            >
               <span class="label">
                 Region {i + 1} · {TIER_NAMES[c.tier]}
               </span>

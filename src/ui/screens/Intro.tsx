@@ -6,6 +6,7 @@ import { importCode } from '../../game/save'
 import { newGame, replaceSave, starterPreview, STARTER_NAMES } from '../../game/store'
 import { IconCheck } from '../icons'
 import { MechView } from '../components/MechView'
+import { sceneImage } from '../../battle/sceneImage'
 import { toast } from '../state'
 import type { VisualLoadout } from '../../art/mech'
 
@@ -37,8 +38,9 @@ export function Intro() {
 
   return (
     <div class="intro">
+      <div class="scene-bg" style={{ backgroundImage: `url(${sceneImage('dunes', 1200)})` }} />
       <div class="logo" aria-label="FreeMechs">
-        FREE
+        <span>FREE</span>
         <br />
         MECHS
       </div>
@@ -68,7 +70,7 @@ export function Intro() {
             <div>
               <h3>{STARTER_NAMES[e]}</h3>
               <span class="label">{e === 'PHYSICAL' ? 'Physical' : e === 'EXPLOSIVE' ? 'Explosive / Heat' : 'Electric / Energy'}</span>
-              <p class="muted" style={{ fontSize: 13 }}>
+              <p style={{ fontSize: 13 }}>
                 {BLURBS[e].text}
               </p>
             </div>
@@ -77,7 +79,7 @@ export function Intro() {
       </div>
 
       <button class="btn primary big" onClick={deploy}>
-        Deploy
+        Deploy mech
       </button>
 
       {!importing ? (

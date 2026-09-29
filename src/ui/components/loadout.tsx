@@ -94,7 +94,7 @@ export function MechStats({ loadout }: { loadout: Loadout }) {
           <i style={{ width: `${pct}%` }} />
         </div>
         {s.overloadPenalty > 0 && (
-          <span style={{ color: 'var(--warn)', fontSize: 13, fontWeight: 600 }}>
+          <span style={{ color: 'var(--gold-hi)', fontSize: 13, fontWeight: 600 }}>
             Overweight: -{s.overloadPenalty} HP (15 HP per kg over {WEIGHT_LIMIT}, max {OVERLOAD_LIMIT} kg)
           </span>
         )}
@@ -199,7 +199,7 @@ export function Picker({ slot, current, candidates, baseWeight, onEquip, onClose
                   {chosen.note && <p class="muted" style={{ fontSize: 13, marginTop: 4 }}>{chosen.note}</p>}
                 </div>
                 <StatList stats={chosen.stats} compare={current && current.key !== chosen.key ? current.stats : undefined} />
-                <p class="num" style={{ fontSize: 13, color: newWeight > OVERLOAD_LIMIT ? 'var(--bad)' : newWeight > WEIGHT_LIMIT ? 'var(--warn)' : 'var(--muted)' }}>
+                <p class="num" style={{ fontSize: 13, color: newWeight > OVERLOAD_LIMIT ? 'var(--red-hi)' : newWeight > WEIGHT_LIMIT ? 'var(--gold-hi)' : 'var(--muted)' }}>
                   Mech weight after equipping: {newWeight} kg
                 </p>
                 <div class="row">

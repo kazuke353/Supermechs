@@ -71,7 +71,7 @@ export function SettingsModal() {
       </div>
 
       <h3 style={{ marginTop: 18 }}>Save data</h3>
-      {!storageOk.value && <p style={{ color: 'var(--warn)', marginTop: 6 }}>This browser is not saving progress automatically. Copy your save code before you leave.</p>}
+      {!storageOk.value && <p style={{ color: 'var(--gold-hi)', marginTop: 6 }}>This browser is not saving progress automatically. Copy your save code before you leave.</p>}
       <p class="muted" style={{ marginTop: 6 }}>
         Progress saves in this browser. Copy the save code to move it to another device or keep a backup.
       </p>
@@ -124,7 +124,7 @@ export function SettingsModal() {
           </button>
         ) : (
           <div class="row">
-            <span style={{ color: 'var(--bad)', fontWeight: 700 }}>Erase everything?</span>
+            <span style={{ color: 'var(--red-hi)', fontWeight: 700 }}>Erase everything?</span>
             <button class="btn small ghost" onClick={() => setConfirmReset(false)}>
               No
             </button>

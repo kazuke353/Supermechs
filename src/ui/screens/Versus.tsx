@@ -11,10 +11,11 @@ import { OnlinePanel } from './Online'
 
 const SCENES: { id: SceneId; name: string }[] = [
   { id: 'arena', name: 'Arena' },
+  { id: 'forest', name: 'Overgrown Outpost' },
   { id: 'scrapyard', name: 'Scrapyard' },
-  { id: 'dunes', name: 'Rust Dunes' },
+  { id: 'dunes', name: 'Red Canyon' },
   { id: 'magma', name: 'Magma Fields' },
-  { id: 'storm', name: 'Storm Peaks' },
+  { id: 'storm', name: 'Frozen Peaks' },
   { id: 'citadel', name: 'Iron Citadel' },
   { id: 'rift', name: 'Divine Rift' },
   { id: 'workshop', name: 'Workshop' },

@@ -153,3 +153,79 @@ export function statIconFor(key: string) {
   if (key === 'advance') return StatIcons.push
   return StatIcons.generic
 }
+
+// ---------------------------------------------------------------------------
+// Console-style glyphs (filled, chunky, outlined)
+
+export const BigArrow = ({ left = false, ...p }: P & { left?: boolean }) => (
+  <svg viewBox="0 0 72 56" aria-hidden="true" class="arrow" {...p}>
+    <g transform={left ? 'translate(72 0) scale(-1 1)' : undefined}>
+      <path d="M4 20h34V6l30 22-30 22V36H4z" fill="#0b2a10" stroke="#000" stroke-width="4" stroke-linejoin="round" />
+      <path d="M6 22h34V10l24 18-24 18V34H6z" fill="url(#ga)" stroke="#c4ffb2" stroke-width="2" stroke-linejoin="round" />
+      <path d="M8 24h34v-8l14 10" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2" stroke-linecap="round" />
+      <path d="M10 22v12M16 22v12" stroke="#177a24" stroke-width="3" />
+      <defs>
+        <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9dff86" />
+          <stop offset="0.55" stop-color="#2bb83b" />
+          <stop offset="1" stop-color="#136b1d" />
+        </linearGradient>
+      </defs>
+    </g>
+  </svg>
+)
+
+export const Nope = (p: P) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="nope" {...p}>
+    <circle cx="12" cy="12" r="10" fill="#fff" stroke="#000" stroke-width="1.5" />
+    <circle cx="12" cy="12" r="7.5" fill="none" stroke="#e0241a" stroke-width="3" />
+    <path d="M6.8 17.2L17.2 6.8" stroke="#e0241a" stroke-width="3" />
+  </svg>
+)
+
+export const Flames = (p: P) => (
+  <svg viewBox="0 0 48 48" aria-hidden="true" class="glyph" {...p}>
+    <defs>
+      <linearGradient id="fl" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#b3130a" />
+        <stop offset="0.5" stop-color="#ff5a1f" />
+        <stop offset="1" stop-color="#ffd35c" />
+      </linearGradient>
+    </defs>
+    {[6, 18, 30].map((x, i) => (
+      <path
+        d={`M${x} 44c-3-10 2-18 ${6 + i} -34c1 10 6 14 6 22 0 7-4 12-${6 + i} 12z`}
+        fill="url(#fl)"
+        stroke="#000"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+    ))}
+    <path d="M24 30l6 6M30 30l-6 6M27 28v10" stroke="#bff6ff" stroke-width="2.5" stroke-linecap="round" />
+  </svg>
+)
+
+export const Bolt = (p: P) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
+    <path d="M14 1L4 14h7l-2 9 11-14h-7z" fill="#3fb6ff" stroke="#000" stroke-width="1.6" stroke-linejoin="round" />
+  </svg>
+)
+
+export const Flame = (p: P) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
+    <path d="M12 1c1 5 7 7 7 14a7 7 0 0 1-14 0c0-4 2-6 3-7 0 3 2 4 3 4 0-4-2-7 1-11z" fill="#ff5a1f" stroke="#000" stroke-width="1.6" stroke-linejoin="round" />
+    <path d="M12 12c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#ffd35c" />
+  </svg>
+)
+
+export const ShieldBadge = ({ color, ...p }: P & { color: string }) => (
+  <svg viewBox="0 0 30 32" aria-hidden="true" {...p}>
+    <path d="M15 1l13 5v9c0 8-6 13-13 16C8 28 2 23 2 15V6z" fill="#000" />
+    <path d="M15 3l11 4v8c0 7-5 11.5-11 14C9 26.5 4 22 4 15V7z" fill={color} />
+    <path d="M15 3l11 4v4H4V7z" fill="rgba(255,255,255,0.35)" />
+    <path d="M15 3l11 4v8c0 7-5 11.5-11 14C9 26.5 4 22 4 15V7z" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="1" />
+  </svg>
+)
+
+export const Power = (p: P) => base([<path d="M12 3v9" />, <path d="M6.3 7.3a8 8 0 1 0 11.4 0" />], p)
+export const IconBase = (p: P) => base([<path d="M3 21V9l9-6 9 6v12" />, <path d="M8 21v-7h8v7M3 21h18" />], p)

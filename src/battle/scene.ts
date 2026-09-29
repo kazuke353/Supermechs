@@ -14,7 +14,7 @@ import { backgroundCanvas, BG_B, BG_L, BG_R, BG_T, GROUND, SCENE_AMBIENT, VH, VW
 export const TILE_W = 112
 export const TILE0 = (VW - TILE_W * 10) / 2 + TILE_W / 2
 export const tileX = (i: number) => TILE0 + i * TILE_W
-export const MECH_SCALE = 0.74
+export const MECH_SCALE = 0.9
 
 type Ctx = CanvasRenderingContext2D
 type Side = 0 | 1
@@ -218,6 +218,8 @@ export class BattleScene {
   reducedMotion = false
   hints: TileHints = { walk: [], teleport: [], range: [] }
   hoverTile: number | null = null
+  /** Whose turn it is: gets the green selection glow. */
+  activeSide: Side | null = null
   onTileClick?: (tile: number) => void
 
   private time = 0
@@ -234,6 +236,11 @@ export class BattleScene {
   private flashAmt = 0
   private flashColor = '#ffffff'
   private view = { k: 1, ox: 0, oy: 0, dpr: 1 }
+  /** Stage size in CSS pixels. */
+  private box = { w: 1, h: 1 }
+  /** Camera centre and zoom in virtual units, eased toward the framing target. */
+  private cam = { x: VW / 2, y: VH / 2, k: 1 }
+  private camSnap = true
   private ro?: ResizeObserver
   private lightning = 0
 
@@ -289,8 +296,53 @@ export class BattleScene {
       this.canvas.width = w
       this.canvas.height = h
     }
-    const k = Math.min(r.width / VW, r.height / VH)
-    this.view = { k, ox: (r.width - VW * k) / 2, oy: (r.height - VH * k) / 2, dpr }
+    this.box = { w: Math.max(1, r.width), h: Math.max(1, r.height) }
+    this.view.dpr = dpr
+    this.camSnap = true
+    this.updateCamera(0)
+  }
+
+  /**
+   * Where the camera wants to be. Wide stages show the whole arena from just
+   * above the tallest mech down to a strip of ground; narrow (portrait) stages
+   * follow the two mechs so they stay big. The view never leaves the painted
+   * backdrop.
+   */
+  private cameraTarget() {
+    const { w, h } = this.box
+    const top = 150
+    const bottom = 680
+    let spanX = 1200
+    let cx = VW / 2
+    if (w / h < 1.25) {
+      const alive = this.fighters.filter((f) => !f.destroyed)
+      const xs = (alive.length ? alive : this.fighters).map((f) => f.x)
+      const lo = Math.min(...xs)
+      const hi = Math.max(...xs)
+      spanX = Math.min(1200, Math.max(640, hi - lo + 420))
+      cx = (lo + hi) / 2
+    }
+    const k = Math.max(Math.min(w / spanX, h / (bottom - top)), w / (BG_R - BG_L), h / (BG_B - BG_T))
+    const halfW = w / k / 2
+    const halfH = h / k / 2
+    return {
+      x: Math.min(BG_R - halfW, Math.max(BG_L + halfW, cx)),
+      y: Math.min(BG_B - halfH, Math.max(BG_T + halfH, (top + bottom) / 2)),
+      k,
+    }
+  }
+
+  private updateCamera(dt: number) {
+    const t = this.cameraTarget()
+    const a = this.camSnap ? 1 : 1 - Math.exp(-dt * 3)
+    this.camSnap = false
+    this.cam.x += (t.x - this.cam.x) * a
+    this.cam.y += (t.y - this.cam.y) * a
+    this.cam.k += (t.k - this.cam.k) * a
+    const { k } = this.cam
+    this.view.k = k
+    this.view.ox = this.box.w / 2 - this.cam.x * k
+    this.view.oy = this.box.h / 2 - this.cam.y * k
   }
 
   // -------------------------------------------------------------------------
@@ -953,6 +1005,7 @@ export class BattleScene {
     const dt = rawDt * this.speed
     this.time += dt
     this.update(dt)
+    this.updateCamera(rawDt)
     this.draw()
     this.raf = requestAnimationFrame(this.frame)
   }
@@ -1034,6 +1087,16 @@ export class BattleScene {
     const r = Math.random()
     if (this.reducedMotion) return
     switch (kind) {
+      case 'snow':
+        for (let i = 0; i < 2; i++)
+          if (Math.random() < dt * 40)
+            this.emit({ x: BG_L + Math.random() * (BG_R - BG_L), y: BG_T + 200, vx: -20 - Math.random() * 30, vy: 60 + Math.random() * 70, life: 9, size: 1.5 + Math.random() * 2.2, color: 'rgba(255,255,255,0.9)', drag: 1 })
+        if (Math.random() < dt * 0.05) this.screenFlash('#e4f1ff', 0.3)
+        break
+      case 'leaves':
+        if (r < dt * 5)
+          this.emit({ x: BG_L + Math.random() * (BG_R - BG_L), y: BG_T + 250, vx: 30 + Math.random() * 40, vy: 30 + Math.random() * 30, life: 12, size: 3, color: Math.random() < 0.5 ? 'rgba(150,190,90,0.85)' : 'rgba(210,200,110,0.8)', drag: 1, shape: 'square' })
+        break
       case 'embers':
         if (r < dt * 14) this.emit({ x: Math.random() * VW, y: VH, vx: (Math.random() - 0.5) * 20, vy: -60 - Math.random() * 60, life: 5, size: 2.5, color: '#ff8a2a', add: true, drag: 1 })
         break
@@ -1072,14 +1135,35 @@ export class BattleScene {
     ctx.drawImage(this.bg, BG_L, BG_T, BG_R - BG_L, BG_B - BG_T)
     this.drawTiles(ctx)
 
-    // Shadows
-    for (const f of this.fighters) {
+    // Shadows and the active-turn glow
+    for (const [i, f] of this.fighters.entries()) {
       if (f.destroyed) continue
       const s = Math.max(0.4, 1 - f.lift / 300)
-      ctx.fillStyle = `rgba(0,0,0,${0.35 * s * f.alpha})`
+      ctx.fillStyle = `rgba(0,0,0,${0.45 * s * f.alpha})`
       ctx.beginPath()
-      ctx.ellipse(f.x, GROUND + 4, 70 * s, 12 * s, 0, 0, Math.PI * 2)
+      ctx.ellipse(f.x, GROUND + 6, 88 * s, 15 * s, 0, 0, Math.PI * 2)
       ctx.fill()
+      if (this.activeSide === i) {
+        const pulse = 0.75 + 0.25 * Math.sin(this.time * 4)
+        ctx.save()
+        ctx.globalCompositeOperation = 'lighter'
+        const g = ctx.createRadialGradient(f.x, GROUND + 6, 4, f.x, GROUND + 6, 100)
+        g.addColorStop(0, `rgba(90,255,110,${0.75 * pulse})`)
+        g.addColorStop(0.55, `rgba(40,220,70,${0.35 * pulse})`)
+        g.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.fillStyle = g
+        ctx.beginPath()
+        ctx.ellipse(f.x, GROUND + 6, 100, 22, 0, 0, Math.PI * 2)
+        ctx.fill()
+        const col = ctx.createLinearGradient(0, GROUND - 90, 0, GROUND + 6)
+        col.addColorStop(0, 'rgba(70,255,95,0)')
+        col.addColorStop(1, `rgba(70,255,95,${0.28 * pulse})`)
+        ctx.fillStyle = col
+        ctx.beginPath()
+        ctx.ellipse(f.x, GROUND - 40, 70, 50, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
+      }
     }
 
     // Debris behind live mechs
@@ -1176,41 +1260,58 @@ export class BattleScene {
       const a = Math.min(1, t.life / 0.4)
       const pop = t.max - t.life < 0.12 ? 1 + (0.12 - (t.max - t.life)) * 4 : 1
       ctx.globalAlpha = a
-      ctx.font = `${Math.round(t.size * pop)}px "Russo One", "Arial Black", sans-serif`
-      ctx.lineWidth = 6
-      ctx.strokeStyle = 'rgba(8,10,16,0.9)'
+      ctx.font = `900 ${Math.round(t.size * pop)}px "Exo 2", "Arial Black", sans-serif`
+      ctx.lineJoin = 'round'
+      ctx.lineWidth = 7
+      ctx.strokeStyle = '#000'
       ctx.strokeText(t.text, t.x, t.y)
       ctx.fillStyle = t.color
       ctx.fillText(t.text, t.x, t.y)
     }
     ctx.globalAlpha = 1
 
-    // Banner
+    // Screen-space overlays: they stay centred and readable whatever the camera does.
+    const { w: sw, h: sh } = this.box
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+    // Banner: black console box with a glowing border
     for (const b of this.banners) {
       const t = 1 - b.life / b.max
       const inT = Math.min(1, t / 0.15)
       const outT = Math.min(1, b.life / 0.25)
       const a = Math.min(inT, outT)
-      ctx.globalAlpha = a
-      ctx.fillStyle = 'rgba(6,10,18,0.72)'
-      ctx.fillRect(0, VH * 0.36, VW, 110)
-      ctx.fillStyle = b.color
-      ctx.fillRect(0, VH * 0.36, VW, 4)
-      ctx.fillRect(0, VH * 0.36 + 106, VW, 4)
-      const scale = 0.8 + 0.2 * ease.outBack(inT)
       ctx.save()
-      ctx.translate(VW / 2, VH * 0.36 + (b.sub ? 46 : 56))
+      ctx.font = '58px "Russo One", "Arial Black", sans-serif'
+      const tw = ctx.measureText(b.text).width
+      const w = Math.max(tw + 90, b.sub ? 520 : 0)
+      const h = b.sub ? 132 : 96
+      const fit = Math.min(0.8, (sw - 32) / w, Math.max(0.34, sh / 700))
+      const scale = fit * (0.85 + 0.15 * ease.outBack(inT))
+      ctx.globalAlpha = a
+      ctx.translate(sw / 2, sh * 0.42)
       ctx.scale(scale, scale)
-      ctx.font = '56px "Russo One", "Arial Black", sans-serif'
-      ctx.lineWidth = 8
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)'
-      ctx.strokeText(b.text, 0, 0)
+      ctx.fillStyle = 'rgba(2,3,3,0.92)'
+      ctx.strokeStyle = '#000'
+      ctx.lineWidth = 10
+      ctx.beginPath()
+      ctx.rect(-w / 2, -h / 2, w, h)
+      ctx.stroke()
+      ctx.fill()
+      ctx.shadowColor = b.color
+      ctx.shadowBlur = 22
+      ctx.strokeStyle = b.color
+      ctx.lineWidth = 5
+      ctx.strokeRect(-w / 2, -h / 2, w, h)
+      ctx.shadowBlur = 18
       ctx.fillStyle = b.color
-      ctx.fillText(b.text, 0, 0)
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(b.text, 0, b.sub ? -18 : 2)
+      ctx.shadowBlur = 0
       if (b.sub) {
-        ctx.font = '22px "Chakra Petch", sans-serif'
-        ctx.fillStyle = '#e6edf6'
-        ctx.fillText(b.sub, 0, 44)
+        ctx.font = '800 22px "Exo 2", sans-serif'
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText(b.sub, 0, 36)
       }
       ctx.restore()
       ctx.globalAlpha = 1
@@ -1219,59 +1320,66 @@ export class BattleScene {
     if (this.flashAmt > 0) {
       ctx.globalAlpha = this.flashAmt
       ctx.fillStyle = this.flashColor
-      ctx.fillRect(0, 0, VW, VH)
+      ctx.fillRect(0, 0, sw, sh)
       ctx.globalAlpha = 1
     }
   }
 
   private drawTiles(ctx: Ctx) {
-    const y = GROUND + 12
     const walk = new Set(this.hints.walk)
     const tele = new Set(this.hints.teleport)
     const range = new Set(this.hints.range)
+    const y = GROUND + 18
     for (let i = 0; i < 10; i++) {
       const x = tileX(i)
-      const w = TILE_W - 10
       const hover = this.hoverTile === i && (walk.has(i) || tele.has(i))
-      ctx.fillStyle = 'rgba(0,0,0,0.28)'
-      ctx.beginPath()
-      ctx.moveTo(x - w / 2 + 10, y)
-      ctx.lineTo(x + w / 2 - 10, y)
-      ctx.lineTo(x + w / 2, y + 26)
-      ctx.lineTo(x - w / 2, y + 26)
-      ctx.closePath()
-      ctx.fill()
-      let color: string | null = null
-      if (range.has(i)) color = 'rgba(255,90,70,0.45)'
-      if (walk.has(i)) color = hover ? 'rgba(120,255,170,0.85)' : 'rgba(90,230,150,0.45)'
-      if (tele.has(i)) color = hover ? 'rgba(200,140,255,0.9)' : 'rgba(170,120,255,0.45)'
-      if (color) {
-        ctx.fillStyle = color
+      if (range.has(i)) {
+        ctx.fillStyle = 'rgba(255,70,50,0.28)'
+        ctx.beginPath()
+        ctx.ellipse(x, y, 50, 11, 0, 0, Math.PI * 2)
         ctx.fill()
-        if (walk.has(i) || tele.has(i)) {
-          // Chevron pointing from our mech
-          const me = this.fighters.find((f) => Math.abs(f.x - x) > 1 && walk.size + tele.size > 0)
-          void me
-          const pulse = 0.6 + 0.4 * Math.sin(this.time * 6 + i)
-          ctx.globalAlpha = pulse
-          ctx.fillStyle = '#ffffff'
-          ctx.beginPath()
-          ctx.arc(x, y + 13, hover ? 7 : 5, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.globalAlpha = 1
-        }
       }
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)'
-      ctx.lineWidth = 1.5
-      ctx.stroke()
+      if (walk.has(i) || tele.has(i)) {
+        const color = tele.has(i) ? [200, 130, 255] : [70, 255, 95]
+        const pulse = 0.65 + 0.35 * Math.sin(this.time * 6 + i * 0.7)
+        ctx.save()
+        ctx.globalCompositeOperation = 'lighter'
+        const g = ctx.createRadialGradient(x, y, 2, x, y, hover ? 60 : 46)
+        g.addColorStop(0, `rgba(${color},${(hover ? 0.9 : 0.55) * pulse})`)
+        g.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.fillStyle = g
+        ctx.beginPath()
+        ctx.ellipse(x, y, hover ? 60 : 46, hover ? 14 : 10, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
+        ctx.strokeStyle = `rgba(${color},${0.9 * pulse})`
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.ellipse(x, y, 34, 8, 0, 0, Math.PI * 2)
+        ctx.stroke()
+        // Chevron pointing down at the spot.
+        const bob = Math.sin(this.time * 5 + i) * 4
+        ctx.fillStyle = `rgb(${color})`
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(x - 14, y - 44 + bob)
+        ctx.lineTo(x + 14, y - 44 + bob)
+        ctx.lineTo(x, y - 26 + bob)
+        ctx.closePath()
+        ctx.stroke()
+        ctx.fill()
+      }
     }
     if (this.hints.targetTile !== undefined) {
       const x = tileX(this.hints.targetTile)
-      ctx.strokeStyle = this.hints.hoverOk ? 'rgba(255,90,70,0.95)' : 'rgba(255,255,255,0.35)'
-      ctx.lineWidth = 3
+      ctx.strokeStyle = this.hints.hoverOk ? 'rgba(255,70,50,0.95)' : 'rgba(255,255,255,0.35)'
+      ctx.lineWidth = 4
+      ctx.setLineDash([10, 8])
       ctx.beginPath()
-      ctx.ellipse(x, GROUND + 6, 64, 14, 0, 0, Math.PI * 2)
+      ctx.ellipse(x, GROUND + 8, 80, 17, 0, 0, Math.PI * 2)
       ctx.stroke()
+      ctx.setLineDash([])
     }
   }
 }
