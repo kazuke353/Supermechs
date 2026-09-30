@@ -1762,6 +1762,32 @@ p {
   padding: 10px 12px;
 }
 
+.vs .card > .gear-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px 0;
+}
+
+.gear-cell {
+  width: 44px;
+}
+
+.gear-tip {
+  position: fixed;
+  z-index: 1000;
+  transform: translateX(-50%);
+  width: 240px;
+  max-width: calc(100vw - 16px);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #0c0d0f;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 2px #000, 0 8px 24px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  font-size: 13px;
+}
+
 .vs-mark {
   font-family: var(--font-display);
   font-size: 44px;

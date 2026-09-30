@@ -1,9 +1,10 @@
 import type { JSX } from 'preact'
+import { useState } from 'preact/hooks'
 import { itemIcon } from '../../art/sprites'
 import { ELEMENT_NAME } from '../../art/palette'
 import { getItem } from '../../engine/catalog'
 import { STAT_INFO, TIER_LETTERS, TIER_MAX_LEVEL, TIER_NAMES, formatStat } from '../../engine/stats'
-import type { ItemDef, ItemInstance, ItemStats, StatKey, Tier } from '../../engine/types'
+import { SLOT_NAMES, type ItemDef, type ItemInstance, type ItemStats, type Loadout, type ResolvedItem, type StatKey, type Tier } from '../../engine/types'
 import { xpToNext } from '../../game/economy'
 import { IconLock, IconPlus, statIconFor } from '../icons'
 
@@ -167,4 +168,40 @@ export function XpBar({ it, gain = 0 }: { it: ItemInstance; gain?: number }) {
 export function rangeText(r?: [number, number]) {
   if (!r) return 'Any'
   return r[0] === r[1] ? `${r[0]}` : `${r[0]}-${r[1]}`
+}
+
+/** Read-only row of a loadout's items; hovering (or focusing) one shows a detail tooltip. */
+export function GearStrip({ loadout }: { loadout: Loadout }) {
+  const [tip, setTip] = useState<{ it: ResolvedItem; x: number; y: number } | null>(null)
+  const items = SLOT_NAMES.map((sl) => loadout[sl]).filter(Boolean) as ResolvedItem[]
+  const show = (it: ResolvedItem, el: HTMLElement) => {
+    const r = el.getBoundingClientRect()
+    const x = Math.max(120, Math.min(window.innerWidth - 120, r.left + r.width / 2))
+    setTip({ it, x, y: r.bottom + 8 })
+  }
+  return (
+    <div class="gear-strip" onMouseLeave={() => setTip(null)}>
+      {items.map((it) => (
+        <div
+          class="gear-cell"
+          onMouseEnter={(e) => show(it, e.currentTarget)}
+          onFocusIn={(e) => show(it, e.currentTarget)}
+          onFocusOut={() => setTip(null)}
+        >
+          <ItemTile def={it.def} tier={it.tier} level={it.level} title="" />
+        </div>
+      ))}
+      {tip && (
+        <div class="gear-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>
+          <b>{tip.it.def.name}</b>
+          <div class="row" style={{ gap: 6, margin: '4px 0 6px' }}>
+            <TierLabel tier={tip.it.tier} />
+            <span class="muted">{TYPE_LABEL[tip.it.def.type]}</span>
+            <ElementLabel def={tip.it.def} />
+          </div>
+          <StatList stats={tip.it.stats} />
+        </div>
+      )}
+    </div>
+  )
 }

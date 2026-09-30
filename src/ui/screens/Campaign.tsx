@@ -7,7 +7,7 @@ import type { VisualLoadout } from '../../art/mech'
 import { CHAPTERS, chapterStars, isUnlocked, missionLoadout, type Mission } from '../../game/campaign'
 import { activeMech, loadoutOf, save } from '../../game/store'
 import { Gold, IconClose, IconLock, IconStar, Token, Xp } from '../icons'
-import { ItemTile } from '../components/items'
+import { GearStrip, ItemTile } from '../components/items'
 import { MechView } from '../components/MechView'
 import { sceneImage } from '../../battle/sceneImage'
 import { startMission } from '../launch'
@@ -55,6 +55,7 @@ function MissionModal({ m, onClose }: { m: Mission; onClose: () => void }) {
         <div class="vs" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)' }}>
           <div class="card">
             <MechView items={vis} facing={-1} fill={0.8} />
+            <GearStrip loadout={enemy} />
             <div>
               <b>{m.enemyName}</b>
               <div class="muted" style={{ fontSize: 13 }}>
