@@ -357,6 +357,22 @@ mod('m_comboengine', 'Combined Engine Unit', K, 'L-D', { weight: 35, eneCap: 155
 mod('m_overload', 'Overload Preventer', K, 'L-D', { weight: 25, eneReg: 73, heaCol: 73 }, 4)
 mod('m_quadcore', 'Quad Core Booster', K, 'L-D', { weight: 40, eneCap: 104, eneReg: 49, heaCap: 94, heaCol: 49 }, 4)
 
+// Research-backed expansion; source mappings and balance decisions live in
+// docs/item-research.md. Keep these additive so existing save IDs stay valid.
+torso('t_ventguard', 'Ventguard', X, 'E-D', [345, 1200, 240, 76, 290, 92, 28, 18, 18], [7, 1, 2], 'Balanced reserves and reinforced frontal armor for a sustained firefight.')
+
+side('s_fracturedslag', 'Fractured Slag Dissolver', X, 'E-D', { weight: 16, dmg: [88, 157], expResDmg: 50, range: [2, 4], uses: 1, backfire: 180 }, 'plasma', 2, { lore: 'A disposable armor solvent. Its ruptured chamber takes a toll on the pilot.' })
+top('tp_blackout', 'Blackout Orb', E, 'L-D', { weight: 60, dmg: [36, 66], eneDmg: 415, range: [3, 6], uses: 1, eneCost: 415, backfire: 180 }, 'orb', 3, { lore: 'Empty their battery in one pulse. Bring enough energy and armor to survive your own discharge.' })
+
+special('TELEPORTER', 'tele_kinetic', 'Kinetic Double Blink', P, 'L-D', { weight: 32, dmg: [75, 105], uses: 2, heaCost: 35 }, 'teleporter', 1)
+
+// Common storage offers a deterministic depot option before premium storage;
+// paired recovery bridges Basic Cooler/Battery and the Overload Preventer.
+mod('m_heatreservoir', 'Heat Reservoir', X, 'C-E', { weight: 20, heaCap: 80 }, 2)
+mod('m_energyreservoir', 'Energy Reservoir', E, 'C-E', { weight: 20, eneCap: 80 }, 3)
+mod('m_twinrecovery', 'Twin Recovery Unit', K, 'E-D', { weight: 30, eneReg: 50, heaCol: 50 }, 4)
+mod('m_prismguard', 'Prism Guard', K, 'L-D', { weight: 60, phyRes: 50, expRes: 50, eleRes: 50 }, 5)
+
 export const ITEMS: readonly ItemDef[] = items
 export const ITEM_MAP: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]))
 
