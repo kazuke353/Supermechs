@@ -346,11 +346,6 @@ export function whyCantUse(state: BattleState, slot: SlotName, side: Side = stat
   const dist = Math.abs(me.position - them.position)
   if (slot !== 'teleporter' && !inRange(s, dist)) return 'Out of range'
   if ((s.advance || s.retreat) && !item.melee && !canJump(me)) return 'Needs jumping legs'
-  if (s.retreat) {
-    const dir = me.position < them.position ? 1 : -1
-    const future = me.position - s.retreat * dir
-    if (future < 0 || future > MAX_POS) return 'No room to retreat'
-  }
   return null
 }
 
