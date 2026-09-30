@@ -93,11 +93,15 @@ export function canTransform(it: ItemInstance): { ok: boolean; reason?: string }
   return { ok: true }
 }
 
-/** Transform in place: next tier, level 1. */
+/** Divine is the finished item; other tiers start at level 1. */
+export function previewTransform(it: ItemInstance): ItemInstance {
+  const tier = (it.tier + 1) as Tier
+  return { ...it, tier, level: tier === 5 ? TIER_MAX_LEVEL[5] : 1, xp: 0 }
+}
+
+/** Transform in place using the same result as the Factory preview. */
 export function transform(it: ItemInstance) {
-  it.tier = (it.tier + 1) as Tier
-  it.level = 1
-  it.xp = 0
+  Object.assign(it, previewTransform(it))
 }
 
 const SELL_BASE: Record<Tier, number> = { 0: 40, 1: 120, 2: 400, 3: 1500, 4: 5000, 5: 12000 }
