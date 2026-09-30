@@ -10,7 +10,7 @@ import { applyResult, bronzeSize, makeOpponent, opponentPower, starsNeeded } fro
 import { BOX_MAP, openBox } from '../src/game/boxes'
 import { CHAPTERS, isUnlocked, missionLoadout, MISSIONS } from '../src/game/campaign'
 import { DEPOT_STOCK, depotPrice, essentialOf } from '../src/game/depot'
-import { addXp, canTransform, fodderXp, KITS, sellValue, transform, xpForTier, xpToMax } from '../src/game/economy'
+import { addXp, canTransform, fodderXp, KITS, sellValue, transform, transformCost, xpForTier, xpToMax } from '../src/game/economy'
 import { PLAYSTYLES, sampleCost } from '../src/game/playstyles'
 import { defaultSave, exportCode, importCode, migrate, STARTING_GOLD } from '../src/game/save'
 import * as store from '../src/game/store'
@@ -38,6 +38,10 @@ describe('economy', () => {
   it('refuses to transform past the transform range', () => {
     const it: ItemInstance = { uid: 'a', defId: 's_scrapcannon', tier: 2, level: 30, xp: 0 }
     expect(canTransform(it).ok).toBe(false)
+  })
+
+  it('keeps the final transformation affordable for its stat gain', () => {
+    expect(transformCost(4)).toEqual({ gold: 15_000, tokens: 80 })
   })
 })
 
