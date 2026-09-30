@@ -60,15 +60,16 @@ export const TIER_MAX_LEVEL: Record<Tier, number> = { 0: 10, 1: 20, 2: 30, 3: 40
 
 /**
  * Stat multiplier relative to Divine max for [level 1, max level] of each tier.
- * Transforming a maxed item lands just above the previous tier's ceiling.
+ * Transforming a maxed item gives a meaningful stat increase while leaving
+ * room to grow in the new tier.
  */
 const TIER_FACTOR: Record<Tier, [number, number]> = {
   0: [0.22, 0.32],
-  1: [0.33, 0.45],
-  2: [0.46, 0.59],
-  3: [0.6, 0.74],
-  4: [0.75, 0.88],
-  5: [0.89, 1.0],
+  1: [0.38, 0.45],
+  2: [0.51, 0.59],
+  3: [0.65, 0.74],
+  4: [0.80, 0.88],
+  5: [0.94, 1.0],
 }
 
 export function statFactor(tier: Tier, level: number): number {

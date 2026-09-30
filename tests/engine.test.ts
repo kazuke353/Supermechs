@@ -289,6 +289,15 @@ describe('mech building', () => {
     }
   })
 
+  it('gives a maxed weapon a meaningful boost when it transforms into Divine', () => {
+    const def = getItem('s_duskfall')
+    const mythicMax = scaleStats(def.stats, 4, 50)
+    const divineStart = scaleStats(def.stats, 5, 1)
+    expect(statFactor(5, 1) - statFactor(4, 50)).toBeCloseTo(0.06)
+    expect(divineStart.phyDmg![0]).toBeGreaterThan(mythicMax.phyDmg![0])
+    expect(divineStart.phyDmg![1]).toBeGreaterThan(mythicMax.phyDmg![1])
+  })
+
   it('costs 15 HP per kg over 1000 and rejects mechs over 1010 kg', () => {
     const base = loadout({ torso: 't_colossus', legs: 'l_anchor' })
     const heavy = { ...base, ...loadout({ module1: 'm_titanplating', module2: 'm_quadcore', module3: 'm_combostorage' }) }
