@@ -522,6 +522,33 @@ mod('m_generatorcoil', 'Generator Coil', E, 'R-L', { weight: 16, eneReg: 50 }, 7
 mod('m_electronfield', 'Electron Field', E, 'L-D', { weight: 34, eneCap: 90, eleRes: 30 }, 3)
 mod('m_heatshroud', 'Heat Shroud', X, 'L-D', { weight: 34, heaCap: 90, expRes: 30 }, 2)
 
+// Expansion III: original silhouettes and specialised tactical sidegrades.
+// Research, tuning rationale and art notes: docs/arsenal-research.md.
+side('s_anchordriver', 'Anchor Driver', P, 'E-D', { weight: 64, dmg: [215, 305], phyResDmg: 9, push: 2, range: [2, 3], uses: 3, heaCost: 44 }, 'anchor-driver', 0,
+  { lore: 'A hydraulic sabot breaks armor and drives the target two tiles back. No energy needed, but the ram runs hot.' })
+side('s_kilnbellows', 'Kiln Bellows', X, 'R-D', { weight: 49, dmg: [130, 205], heaDmg: 96, range: [2, 5], heaCost: 58 }, 'kiln-bellows', 0,
+  { lore: 'A furnace fed by mechanical bellows. Keeps firing after an energy break; leaves its pilot with a cooling bill.' })
+side('s_prismfork', 'Prism Fork', E, 'R-D', { weight: 52, dmg: [135, 210], eneDmg: 108, range: [2, 5], eneCost: 58, heaCost: 12 }, 'prism-fork', 0,
+  { lore: 'A crystal suspended between two electrodes drains batteries. Its appetite for energy matches its reach.' })
+side('s_cindersiphon', 'Cinder Siphon', X, 'E-D', { weight: 54, dmg: [105, 170], heaDmg: 65, heaColDmg: 28, range: [3, 5], uses: 2, eneCost: 24, heaCost: 32 }, 'cinder-siphon', 0,
+  { lore: 'Two siphon bottles foul enemy radiators. Only two doses; carry a repeatable heat weapon to finish the job.' })
+side('s_relayleech', 'Relay Leech', E, 'E-D', { weight: 55, dmg: [105, 175], eneDmg: 72, eneRegDmg: 28, range: [3, 5], uses: 2, eneCost: 48, heaCost: 18 }, 'relay-leech', 0,
+  { lore: 'A needle array shorts the target generator. Sacrifices raw damage for two lasting hits to regeneration.' })
+side('s_sawtooth', 'Sawtooth Carbine', P, 'C-D', { weight: 47, dmg: [155, 245], phyResDmg: 5, range: [2, 5], uses: 4, heaCost: 28 }, 'sawtooth-carbine', 0,
+  { lore: 'Four drum-fed volleys for pilots building their first energy-free arsenal. No ammunition after the fourth.' })
+top('tp_dicehowitzer', 'Dice Howitzer', P, 'E-D', { weight: 67, dmg: [145, 470], range: [4, 7], uses: 2, eneCost: 34, heaCost: 48 }, 'dice-howitzer', 0,
+  { lore: 'Six chambers, wildly different yields. Two long-range shots reward risk, but neither is a guaranteed finisher.' })
+top('tp_furnaceorgan', 'Furnace Organ', X, 'E-D', { weight: 69, dmg: [165, 250], heaDmg: 105, heaCapDmg: 16, range: [4, 7], uses: 3, heaCost: 64 }, 'furnace-organ', 0,
+  { lore: 'Three stepped furnace pipes squeeze heat capacity at long range. Heavy, hot and helpless up close.' })
+top('tp_stormastrolabe', 'Storm Astrolabe', E, 'L-D', { weight: 71, dmg: [165, 255], eneDmg: 118, eneCapDmg: 20, range: [4, 7], uses: 3, eneCost: 64, heaCost: 14 }, 'storm-astrolabe', 0,
+  { lore: 'Gyroscopic electrodes collapse the target battery reserve. Needs a strong generator and a clear firing lane.' })
+top('tp_ballistacrown', 'Ballista Crown', P, 'L-D', { weight: 61, dmg: [285, 395], phyResDmg: 12, range: [5, 8], uses: 2, eneCost: 16, heaCost: 45 }, 'ballista-crown', 0,
+  { lore: 'A crown of bow limbs launches armor-piercing sabots. Reliable at distance; two bolts and no close-range answer.' })
+add('DRONE', 'd_embermanta', 'Ember Manta', X, 'E-D', { weight: 46, dmg: [115, 185], heaDmg: 48, backfire: 32, heaCost: 35 }, { kind: 'ember-manta' },
+  { lore: 'A flying furnace under swept manta wings. Energy-free pressure every turn costs its pilot both heat and health.' })
+add('DRONE', 'd_capacitorjelly', 'Capacitor Jelly', E, 'R-D', { weight: 39, dmg: [100, 165], eneDmg: 52, eneCost: 38, heaCost: 8 }, { kind: 'capacitor-jelly' },
+  { lore: 'Hanging capacitors pulse beneath a hover dome. A light drain companion, dependent on its pilot battery.' })
+
 export const ITEMS: readonly ItemDef[] = items
 export const ITEM_MAP: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]))
 

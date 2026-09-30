@@ -1,5 +1,9 @@
 # Item expansion research
 
+Expansion III adds twelve individually drawn weapons and drones. See
+[Original Arsenal research and design notes](arsenal-research.md) for sources,
+stat tradeoffs, distinct silhouettes and preview instructions.
+
 ## Expansion I: eight parts
 
 Research checked September 29–30, 2026. This adds eight definitions to the existing 234-part catalog. FreeMechs keeps its original names, procedural artwork, Divine-max stat convention and tier scaling. These are fan-game adaptations, not a claim of exact current SuperMechs parity. No original assets or descriptive prose were imported.

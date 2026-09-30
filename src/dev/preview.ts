@@ -8,9 +8,10 @@ const mode = params.get('mode') ?? 'items'
 
 if (mode === 'items') {
   const type = params.get('type')
+  const ids = params.get('ids')?.split(',')
   const wrap = document.createElement('div')
   wrap.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,110px);gap:6px;padding:8px'
-  for (const def of ITEMS.filter((i) => !type || type.split(',').includes(i.type))) {
+  for (const def of ITEMS.filter((i) => (!type || type.split(',').includes(i.type)) && (!ids || ids.includes(i.id)))) {
     const d = document.createElement('div')
     d.style.cssText = 'background:#243042;border-radius:6px;padding:4px;text-align:center'
     const img = new Image()
