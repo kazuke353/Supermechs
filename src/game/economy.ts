@@ -78,7 +78,7 @@ const TRANSFORM_COST: Record<Tier, TransformCost> = {
   1: { gold: 1500, tokens: 0 },
   2: { gold: 5000, tokens: 0 },
   3: { gold: 12000, tokens: 40 },
-  4: { gold: 30000, tokens: 120 },
+  4: { gold: 15000, tokens: 80 },
   5: { gold: 0, tokens: 0 },
 }
 
