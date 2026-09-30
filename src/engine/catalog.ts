@@ -373,6 +373,153 @@ mod('m_energyreservoir', 'Energy Reservoir', E, 'C-E', { weight: 20, eneCap: 80 
 mod('m_twinrecovery', 'Twin Recovery Unit', K, 'E-D', { weight: 30, eneReg: 50, heaCol: 50 }, 4)
 mod('m_prismguard', 'Prism Guard', K, 'L-D', { weight: 60, phyRes: 50, expRes: 50, eleRes: 50 }, 5)
 
+// ---------------------------------------------------------------------------
+// Expansion II. Two kinds of entries, both mapped in docs/item-research.md:
+// archetypes with published community stats that were still missing, and
+// element counterparts of families from the final game client, whose stats
+// were never published and are tuned here against their existing siblings.
+// New IDs only, so older saves keep every part they own.
+
+// Torsos
+torso('t_dreadkiln', 'Dread Kiln', X, 'R-D', [328, 1010, 200, 60, 290, 90, 30, 16, 22], [4, 2, 3], 'A compact heat frame with a thick front plate. Many Explosive pilots take it as their first upgrade.')
+torso('t_coilback', 'Coilback', E, 'E-D', [345, 1200, 280, 92, 210, 70, 28, 18, 18], [7, 3, 2], 'A deep battery wrapped in frontal armor, built for long trades.')
+torso('t_coldcore', 'Coldcore', E, 'L-D', [335, 1440, 240, 82, 28, 8, 24, 24, 24], [4, 1, 2], 'Heat-free armor for energy loadouts. Pack a cooler for anything that runs hot.')
+torso('t_kilnwall', 'Kilnwall', X, 'L-D', [340, 1330, 24, 8, 300, 100, 20, 28, 20], [0, 3, 1], 'Energy-free plating around a furnace-grade heat sink.')
+torso('t_crucible', 'Crucible Tank', X, 'E-D', [350, 1260, 190, 22, 470, 28, 14, 14, 14], [6, 0, 3], 'All heat capacity and almost no cooling. Unload early and end it fast.')
+torso('t_bastille', 'Bastille', P, 'L-D', [352, 950, 245, 74, 245, 74, 40, 34, 34], [3, 2, 1], 'Thick all-round armor on a modest frame. Every element hits it softly.')
+torso('t_emberguard', 'Emberguard', X, 'L-D', [352, 930, 215, 66, 300, 94, 34, 40, 34], [5, 4, 1], 'Heat-tuned sibling of the Bastille, with the same all-round armor.')
+torso('t_voltguard', 'Voltguard', E, 'L-D', [352, 930, 300, 96, 215, 66, 34, 34, 40], [5, 3, 2], 'Energy-tuned sibling of the Bastille, insulated all over.')
+torso('t_manifold', 'Manifold', P, 'E-D', [356, 1100, 240, 88, 240, 88, 20, 20, 20], [6, 1, 0], 'Twin cores recover energy and heat at the same brisk pace.')
+torso('t_triforge', 'Triforge', X, 'E-D', [358, 1070, 210, 78, 300, 114, 20, 16, 20], [6, 2, 2], 'Three exhaust stacks keep it cool through long exchanges.')
+torso('t_stockade', 'Stockade', P, 'R-L', [330, 1080, 200, 58, 240, 72, 24, 20, 20], [0, 1, 1], 'A cheap, sturdy frame for pilots stepping up from their first chassis.')
+torso('t_hearthwall', 'Hearthwall', X, 'R-L', [330, 1040, 200, 58, 300, 92, 20, 24, 20], [1, 2, 1], 'An early heat frame that trades reserves for plating.')
+torso('t_relaywall', 'Relaywall', E, 'R-L', [330, 1040, 290, 94, 200, 58, 20, 20, 24], [1, 3, 1], 'An early energy frame with a sturdy relay housing.')
+torso('t_porter', 'Porter', P, 'E-D', [300, 930, 215, 66, 250, 74, 18, 18, 18], [2, 0, 0], 'A stripped-down carrier frame. Light enough to haul an extra gun.')
+torso('t_courier', 'Courier', E, 'E-D', [300, 900, 285, 98, 200, 62, 18, 18, 18], [2, 3, 0], 'A featherweight energy frame that leaves room for heavy weapons.')
+torso('t_opticframe', 'Optic Frame', P, 'E-D', [322, 950, 225, 82, 250, 86, 20, 20, 20], [7, 0, 0], 'A sensor-heavy scout chassis that recovers quickly between volleys.')
+torso('t_ashglass', 'Ashglass', X, 'E-D', [322, 930, 205, 70, 290, 106, 20, 16, 20], [7, 2, 0], 'A lean scout frame with oversized radiators.')
+torso('t_blastscreen', 'Blast Screen', P, 'L-D', [346, 980, 210, 66, 305, 95, 16, 44, 22], [3, 0, 2], 'Hardened against explosive attacks.')
+torso('t_basaltscreen', 'Basalt Screen', X, 'L-D', [348, 1060, 207, 64, 284, 96, 16, 22, 44], [3, 1, 2], 'Heat chassis shielded against electric fire.')
+torso('t_staticscreen', 'Static Screen', E, 'L-D', [348, 1060, 282, 96, 207, 64, 22, 44, 16], [3, 3, 2], 'Energy chassis shielded against explosive fire.')
+torso('t_ambershell', 'Amber Shell', P, 'C-E', [304, 850, 210, 62, 255, 78, 20, 26, 20], [1, 0, 0], 'A light starter hull with a hardened blast shell.')
+torso('t_garnetshell', 'Garnet Shell', X, 'C-E', [304, 850, 195, 60, 290, 92, 24, 20, 20], [1, 2, 0], 'A light starter hull that shrugs off kinetic rounds.')
+torso('t_cobaltshell', 'Cobalt Shell', E, 'C-E', [304, 850, 290, 100, 195, 60, 20, 20, 24], [1, 3, 0], 'A light starter hull wrapped in insulated cobalt.')
+torso('t_glacierlynx', 'Glacier Lynx', E, 'M-D', [362, 1225, 330, 114, 207, 64, 16, 16, 24], [5, 4, 3], 'A mythical hunter frame with a battery to match its bite.')
+
+// Legs
+legs('l_coilbraces', 'Coil Braces', E, 'E-D', { weight: 124, health: 428, dmg: [131, 197], eneDmg: 69, push: 1, walk: 1, jump: 2 }, 1, 'Braced struts that dump a heavy jolt into every kick.')
+legs('l_stonebraces', 'Stone Braces', P, 'E-D', { weight: 126, health: 460, dmg: [150, 225], heaColDmg: 6, eneRegDmg: 6, push: 1, walk: 1, jump: 2 }, 1, 'Each kick rattles the target\'s cooling and generators.')
+legs('l_magmabraces', 'Magma Braces', X, 'E-D', { weight: 122, health: 440, dmg: [131, 197], heaDmg: 60, push: 1, walk: 1, jump: 2 }, 1, 'Molten struts that sear whatever they kick.')
+legs('l_slagpincers', 'Slag Pincers', X, 'L-D', { weight: 148, health: 880, dmg: [76, 108], heaDmg: 30 }, 4, 'Anchored heat clamps. They never move, and they never need to.')
+legs('l_arcfangs', 'Arc Fangs', E, 'L-D', { weight: 148, health: 880, dmg: [76, 108], eneDmg: 40 }, 4, 'Anchored shock claws. Enormous health, zero mobility.')
+legs('l_ashdiggers', 'Ash Diggers', X, 'R-D', { weight: 115, health: 285, dmg: [150, 200], heaDmg: 34, push: 2, walk: 1, jump: 2 }, 1, 'Light legs with a scorching kick.')
+legs('l_ghostdiggers', 'Ghost Diggers', E, 'R-D', { weight: 116, health: 280, dmg: [150, 200], eneDmg: 45, push: 2, walk: 1, jump: 2 }, 1, 'Light legs with a draining kick.')
+legs('l_gravelrunners', 'Gravel Runners', P, 'E-D', { weight: 130, health: 440, dmg: [150, 225], push: 1, walk: 3 }, 3, 'Early treads: three tiles a step, but never a jump.')
+legs('l_cinderrollers', 'Cinder Rollers', X, 'E-D', { weight: 118, health: 370, dmg: [130, 220], heaDmg: 30, push: 1, walk: 3 }, 3, 'Glowing treads for an early chase.')
+legs('l_voltrollers', 'Volt Rollers', E, 'E-D', { weight: 117, health: 365, dmg: [130, 225], eneDmg: 36, push: 1, walk: 3 }, 3, 'Magnetic treads for an early chase.')
+legs('l_rockfall', 'Rockfall Stompers', P, 'R-D', { weight: 144, health: 540, dmg: [175, 240], push: 1, walk: 1, jump: 2 }, 0, 'Heavier stompers that land like a rockslide.')
+legs('l_flarestep', 'Flarestep Boots', X, 'R-D', { weight: 124, health: 445, dmg: [150, 200], heaDmg: 42, push: 1, walk: 1, jump: 2 }, 0, 'Upgraded jump boots with hotter exhausts.')
+legs('l_tinstriders', 'Tin Striders', P, 'C-L', { weight: 114, health: 290, dmg: [155, 205], push: 2, walk: 1, jump: 2 }, 1, 'Cheap, light legs that kick enemies back.')
+legs('l_emberstriders', 'Ember Striders', X, 'C-L', { weight: 110, health: 270, dmg: [140, 185], heaDmg: 30, push: 2, walk: 1, jump: 2 }, 1, 'Cheap, light legs with a burning kick.')
+legs('l_joltstriders', 'Jolt Striders', E, 'C-L', { weight: 111, health: 270, dmg: [140, 185], eneDmg: 40, push: 2, walk: 1, jump: 2 }, 1, 'Cheap, light legs with a shocking kick.')
+
+// Side weapons: disposable resistance breakers
+side('s_pitteddissolver', 'Pitted Dissolver', P, 'E-D', { weight: 16, dmg: [88, 157], phyResDmg: 50, range: [2, 4], uses: 1, backfire: 180 }, 'plasma', 0)
+side('s_crackedarc', 'Cracked Arc Piercer', E, 'L-D', { weight: 8, dmg: [96, 155], eneDmg: 71, eleResDmg: 60, range: [2, 4], uses: 1, backfire: 180 }, 'rifle', 2)
+side('s_crackedslag', 'Cracked Slag Piercer', X, 'L-D', { weight: 8, dmg: [96, 155], heaDmg: 53, expResDmg: 60, range: [2, 4], uses: 1, backfire: 180 }, 'rifle', 2)
+// Gap closers: fire from range, then leap next to the target (jumping legs required)
+side('s_gapcloser', 'Gap Closer', P, 'L-D', { weight: 31, dmg: [161, 289], phyResDmg: 5, range: [3, 6], advance: 6, uses: 2, heaCost: 38 }, 'blaster', 2)
+side('s_flamelunger', 'Flame Lunger', X, 'L-D', { weight: 34, dmg: [143, 255], heaDmg: 46, expResDmg: 5, range: [3, 6], advance: 6, uses: 2, heaCost: 38 }, 'flamer', 2)
+side('s_sparklunger', 'Spark Lunger', E, 'L-D', { weight: 35, dmg: [143, 255], eneDmg: 61, eleResDmg: 5, range: [3, 6], advance: 6, uses: 2, heaCost: 38 }, 'tesla', 3)
+side('s_bumper', 'Bumper Blaster', P, 'R-E', { weight: 18, dmg: [31, 41], push: 3, range: [2, 4], uses: 2, heaCost: 37 }, 'blaster', 0)
+// Last-stand long guns
+side('s_laststandinferno', 'Last Stand Inferno', X, 'L-D', { weight: 54, dmg: [200, 440], heaDmg: 110, expResDmg: 18, range: [4, 8], uses: 2, backfire: 180, heaCost: 60 }, 'minigun', 1)
+side('s_laststandsurge', 'Last Stand Surge', E, 'L-D', { weight: 54, dmg: [200, 440], eneDmg: 140, eleResDmg: 18, range: [4, 8], uses: 2, backfire: 180, eneCost: 60 }, 'minigun', 1)
+// Sustained gatlings
+side('s_crimsongatling', 'Crimson Gatling', P, 'E-D', { weight: 54, dmg: [170, 290], phyResDmg: 8, range: [2, 4], eneCost: 20, heaCost: 34 }, 'minigun', 0)
+side('s_stormgatling', 'Storm Gatling', E, 'E-D', { weight: 56, dmg: [150, 250], eneDmg: 90, eneCapDmg: 10, range: [2, 4], eneCost: 42, heaCost: 12 }, 'minigun', 2)
+// Heavy rocket racks
+side('s_tombstone', 'Tombstone Rack', P, 'L-D', { weight: 68, dmg: [260, 470], phyResDmg: 12, push: 1, range: [3, 6], uses: 2, eneCost: 31, heaCost: 44 }, 'rocket', 0)
+side('s_pyrerack', 'Pyre Rack', X, 'L-D', { weight: 68, dmg: [220, 400], heaDmg: 100, expResDmg: 12, push: 1, range: [3, 6], uses: 2, eneCost: 16, heaCost: 62 }, 'rocket', 1)
+side('s_thunderrack', 'Thunder Rack', E, 'L-D', { weight: 70, dmg: [220, 400], eneDmg: 120, eleResDmg: 12, push: 1, range: [3, 6], uses: 2, eneCost: 62, heaCost: 16 }, 'rocket', 2)
+side('s_skybreaker', 'Skybreaker', X, 'L-D', { weight: 56, dmg: [340, 600], heaDmg: 120, expResDmg: 10, range: [4, 8], uses: 1, heaCost: 70 }, 'rocket', 3)
+side('s_dirge', 'Dirge Launcher', X, 'E-D', { weight: 48, dmg: [190, 330], heaDmg: 70, push: 1, range: [2, 4], uses: 3, heaCost: 50 }, 'cannon', 1)
+// Wands and lances
+side('s_solarwand', 'Solar Wand', X, 'R-D', { weight: 40, dmg: [140, 220], heaDmg: 66, range: [3, 5], eneCost: 18, heaCost: 40 }, 'plasma', 4)
+side('s_lunarwand', 'Lunar Wand', E, 'R-D', { weight: 40, dmg: [140, 220], eneDmg: 78, range: [3, 5], eneCost: 42, heaCost: 12 }, 'tesla', 4)
+side('s_dunelance', 'Dune Lance', P, 'E-D', { weight: 46, dmg: [185, 280], range: [3, 6], eneCost: 25, heaCost: 35 }, 'laser', 0)
+// Close-range starter cannons
+side('s_blunderbuss', 'Blunderbuss', X, 'C-E', { weight: 42, dmg: [150, 205], heaDmg: 40, push: 1, range: [1, 3], uses: 3, heaCost: 30 }, 'cannon', 3)
+side('s_sparkpopper', 'Spark Popper', E, 'C-E', { weight: 40, dmg: [145, 205], eneDmg: 42, push: 1, range: [1, 3], uses: 3, eneCost: 30 }, 'cannon', 4)
+// Rocket batteries: long-range starters and their Rare upgrades
+side('s_slugbattery', 'Slug Battery', P, 'C-E', { weight: 40, dmg: [160, 225], range: [3, 6], uses: 3, eneCost: 12, heaCost: 24 }, 'rocket', 0)
+side('s_boombattery', 'Boom Battery', X, 'C-E', { weight: 40, dmg: [140, 195], heaDmg: 38, range: [3, 6], uses: 3, heaCost: 34 }, 'rocket', 1)
+side('s_sparkbattery', 'Spark Battery', E, 'C-E', { weight: 40, dmg: [140, 195], eneDmg: 42, range: [3, 6], uses: 3, eneCost: 34 }, 'rocket', 2)
+side('s_slugbattery2', 'Slug Battery II', P, 'R-D', { weight: 48, dmg: [210, 330], phyResDmg: 6, range: [3, 6], uses: 3, eneCost: 20, heaCost: 30 }, 'rocket', 0)
+side('s_boombattery2', 'Boom Battery II', X, 'R-D', { weight: 48, dmg: [185, 295], heaDmg: 62, expResDmg: 5, range: [3, 6], uses: 3, heaCost: 46 }, 'rocket', 1)
+side('s_sparkbattery2', 'Spark Battery II', E, 'R-D', { weight: 48, dmg: [185, 295], eneDmg: 72, eleResDmg: 5, range: [3, 6], uses: 3, eneCost: 46 }, 'rocket', 2)
+// Recovery and capacity breakers
+side('s_coolantbreaker', 'Coolant Breaker', X, 'E-D', { weight: 46, dmg: [150, 230], heaDmg: 50, heaColDmg: 22, range: [2, 4], uses: 3, heaCost: 40 }, 'cannon', 2)
+side('s_regenbreaker', 'Regen Breaker', E, 'E-D', { weight: 46, dmg: [150, 230], eneDmg: 60, eneRegDmg: 22, range: [2, 4], uses: 3, eneCost: 40 }, 'cannon', 4)
+side('s_heateater', 'Heat Eater', X, 'E-D', { weight: 38, dmg: [120, 190], heaDmg: 60, heaCapDmg: 40, range: [3, 6], uses: 2, heaCost: 35 }, 'laser', 1)
+side('s_chargeeater', 'Charge Eater', E, 'E-D', { weight: 38, dmg: [120, 190], eneDmg: 70, eneCapDmg: 40, range: [3, 6], uses: 2, eneCost: 35 }, 'laser', 3)
+// Swarm launchers
+side('s_scrapswarm', 'Scrap Swarm', P, 'E-D', { weight: 58, dmg: [150, 380], phyResDmg: 8, range: [1, 3], uses: 3, eneCost: 20, heaCost: 40 }, 'rocket', 3)
+side('s_cinderswarm', 'Cinder Swarm', X, 'E-D', { weight: 58, dmg: [130, 330], heaDmg: 70, expResDmg: 8, range: [1, 3], uses: 3, heaCost: 52 }, 'rocket', 3)
+side('s_staticswarm', 'Static Swarm', E, 'E-D', { weight: 60, dmg: [130, 330], eneDmg: 85, eleResDmg: 8, range: [1, 3], uses: 3, eneCost: 52 }, 'rocket', 3)
+
+// Top weapons
+top('tp_spartanblaze', 'Spartan Blaze', X, 'L-D', { weight: 53, dmg: [210, 350], heaDmg: 85, expResDmg: 13, range: [3, 6], uses: 3, eneCost: 19, heaCost: 50 }, 'missiles', 1)
+top('tp_spartansurge', 'Spartan Surge', E, 'L-D', { weight: 53, dmg: [210, 350], eneDmg: 105, eleResDmg: 13, range: [3, 6], uses: 3, eneCost: 50, heaCost: 19 }, 'missiles', 1)
+top('tp_sovereignarc', 'Sovereign Arc', E, 'E-D', { weight: 66, dmg: [210, 323], eneDmg: 95, eleResDmg: 11, push: 1, range: [3, 6], uses: 3, eneCost: 44, heaCost: 19 }, 'missiles', 0)
+top('tp_shrapnelpod', 'Shrapnel Pod', P, 'C-L', { weight: 44, dmg: [180, 255], push: 1, range: [2, 4], uses: 3, heaCost: 30 }, 'pod', 1)
+top('tp_flarepod', 'Flare Pod', X, 'C-L', { weight: 44, dmg: [155, 225], heaDmg: 45, push: 1, range: [2, 4], uses: 3, heaCost: 36 }, 'pod', 1)
+top('tp_arcpod', 'Arc Pod', E, 'C-L', { weight: 44, dmg: [155, 225], eneDmg: 50, push: 1, range: [2, 4], uses: 3, eneCost: 36 }, 'pod', 1)
+top('tp_hailcannon', 'Hail Cannon', P, 'C-E', { weight: 42, dmg: [140, 200], range: [3, 6], eneCost: 20, heaCost: 24 }, 'artillery', 0)
+top('tp_slaghail', 'Slag Hail', X, 'C-E', { weight: 42, dmg: [120, 175], heaDmg: 38, range: [3, 6], eneCost: 8, heaCost: 42 }, 'artillery', 2)
+top('tp_shockhail', 'Shock Hail', E, 'C-E', { weight: 42, dmg: [120, 175], eneDmg: 42, range: [3, 6], eneCost: 42, heaCost: 8 }, 'artillery', 3)
+top('tp_chainrepeater', 'Chain Repeater', P, 'R-L', { weight: 50, dmg: [165, 250], range: [2, 4], eneCost: 20, heaCost: 28 }, 'railgun', 2)
+top('tp_cinderrepeater', 'Cinder Repeater', X, 'R-L', { weight: 50, dmg: [140, 215], heaDmg: 56, range: [2, 4], eneCost: 8, heaCost: 42 }, 'railgun', 2)
+top('tp_voltrepeater', 'Volt Repeater', E, 'R-L', { weight: 50, dmg: [140, 215], eneDmg: 64, range: [2, 4], eneCost: 42, heaCost: 8 }, 'railgun', 2)
+top('tp_topazbeam', 'Topaz Beam', P, 'R-L', { weight: 38, dmg: [150, 215], range: [4, 8], eneCost: 20, heaCost: 20 }, 'railgun', 3)
+top('tp_rubybeam', 'Ruby Beam', X, 'R-L', { weight: 38, dmg: [130, 190], heaDmg: 44, range: [4, 8], eneCost: 10, heaCost: 32 }, 'railgun', 3)
+top('tp_sapphirebeam', 'Sapphire Beam', E, 'R-L', { weight: 38, dmg: [130, 190], eneDmg: 52, range: [4, 8], eneCost: 32, heaCost: 10 }, 'railgun', 3)
+top('tp_steelwasp', 'Steel Wasp', P, 'E-D', { weight: 44, dmg: [230, 370], phyResDmg: 8, range: [2, 5], uses: 2, eneCost: 25, heaCost: 35 }, 'missiles', 2)
+top('tp_emberwasp', 'Ember Wasp', X, 'E-D', { weight: 44, dmg: [200, 325], heaDmg: 80, expResDmg: 8, range: [2, 5], uses: 2, heaCost: 56 }, 'missiles', 2)
+top('tp_stormwasp', 'Storm Wasp', E, 'E-D', { weight: 44, dmg: [200, 325], eneDmg: 95, eleResDmg: 8, range: [2, 5], uses: 2, eneCost: 56 }, 'missiles', 2)
+top('tp_ironram', 'Iron Ram', P, 'E-D', { weight: 52, dmg: [220, 345], push: 2, range: [3, 6], uses: 3, eneCost: 28, heaCost: 28 }, 'artillery', 1)
+top('tp_blastram', 'Blast Ram', X, 'E-D', { weight: 52, dmg: [190, 305], heaDmg: 72, push: 2, range: [3, 6], uses: 3, eneCost: 14, heaCost: 52 }, 'artillery', 2)
+top('tp_thunderram', 'Thunder Ram', E, 'E-D', { weight: 54, dmg: [190, 305], eneDmg: 88, push: 2, range: [3, 6], uses: 3, eneCost: 52, heaCost: 14 }, 'artillery', 3)
+top('tp_novalance', 'Nova Lance', P, 'E-D', { weight: 52, dmg: [190, 285], phyResDmg: 10, range: [3, 7], eneCost: 30, heaCost: 30 }, 'orb', 0)
+top('tp_flarenova', 'Flare Nova', X, 'E-D', { weight: 52, dmg: [170, 255], heaDmg: 66, expResDmg: 9, range: [3, 7], eneCost: 16, heaCost: 50 }, 'orb', 1)
+top('tp_pulsenova', 'Pulse Nova', E, 'E-D', { weight: 52, dmg: [170, 255], eneDmg: 84, eleResDmg: 9, range: [3, 7], eneCost: 50, heaCost: 16 }, 'orb', 2)
+top('tp_irondownpour', 'Iron Downpour', P, 'L-D', { weight: 75, dmg: [220, 420], phyResDmg: 14, pull: 2, range: [4, 8], uses: 3, eneCost: 31, heaCost: 50 }, 'missiles', 1)
+top('tp_staticdownpour', 'Static Downpour', E, 'L-D', { weight: 70, dmg: [180, 350], eneDmg: 100, eleResDmg: 12, eneRegDmg: 10, pull: 2, range: [4, 8], uses: 3, eneCost: 81 }, 'missiles', 1)
+top('tp_bluesquall', 'Blue Squall', E, 'L-D', { weight: 65, dmg: [229, 361], eneDmg: 130, eneRegDmg: 19, pull: 2, range: [2, 4], uses: 2, eneCost: 81, heaCost: 30 }, 'mortar', 3)
+top('tp_redadder', 'Red Adder', X, 'E-D', { weight: 52, dmg: [180, 320], heaDmg: 90, expResDmg: 8, range: [2, 5], uses: 3, heaCost: 55 }, 'mortar', 2)
+
+// Drones: Epic self-damaging guardians and Rare starters
+drone('d_grudgeguard', 'Grudge Guardian', P, 'E-D', { weight: 42, dmg: [206, 368], phyResDmg: 5, backfire: 108, eneCost: 16, heaCost: 16 }, 1)
+drone('d_turncoatguard', 'Turncoat Guardian', X, 'E-D', { weight: 43, dmg: [130, 233], heaDmg: 52, expResDmg: 5, backfire: 60, heaCost: 44 }, 1)
+drone('d_glitchguard', 'Glitch Guardian', E, 'E-D', { weight: 42, dmg: [138, 243], eneDmg: 78, eleResDmg: 5, backfire: 87, eneCost: 69 }, 1)
+drone('d_picket', 'Picket Drone', P, 'R-E', { weight: 30, dmg: [120, 170], eneCost: 12, heaCost: 12 }, 0)
+drone('d_brandwisp', 'Branding Wisp', X, 'R-E', { weight: 32, dmg: [95, 140], heaDmg: 38, heaCost: 24 }, 2)
+drone('d_voltmote', 'Volt Mote', E, 'R-E', { weight: 30, dmg: [95, 140], eneDmg: 40, eneCost: 24 }, 2)
+
+// Specials
+special('CHARGE_ENGINE', 'c_surge', 'Surge Charger', E, 'L-D', { weight: 22, dmg: [200, 280], eneDmg: 60, push: 1, range: [2, 9], uses: 1, eneCost: 30 }, 'charge', 1)
+
+// Modules
+mod('m_kineticdamp', 'Kinetic Dampener', P, 'E-D', { weight: 28, phyRes: 42 }, 1)
+mod('m_thermaldamp', 'Thermal Dampener', X, 'E-D', { weight: 28, expRes: 42 }, 1)
+mod('m_staticdamp', 'Static Dampener', E, 'E-D', { weight: 28, eleRes: 42 }, 1)
+mod('m_tridamp', 'Tri-Dampener', K, 'E-D', { weight: 51, phyRes: 28, expRes: 28, eleRes: 28 }, 1)
+mod('m_steelplating', 'Steel Plating', P, 'E-D', { weight: 40, health: 240 }, 0)
+mod('m_heatsink', 'Heat Sink', X, 'R-L', { weight: 16, heaCol: 50 }, 6)
+mod('m_generatorcoil', 'Generator Coil', E, 'R-L', { weight: 16, eneReg: 50 }, 7)
+mod('m_electronfield', 'Electron Field', E, 'L-D', { weight: 34, eneCap: 90, eleRes: 30 }, 3)
+mod('m_heatshroud', 'Heat Shroud', X, 'L-D', { weight: 34, heaCap: 90, expRes: 30 }, 2)
+
 export const ITEMS: readonly ItemDef[] = items
 export const ITEM_MAP: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]))
 
