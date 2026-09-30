@@ -169,9 +169,11 @@ describe('knockback and movement effects', () => {
     expect(b.state.fighters[1].position).toBe(3)
   })
 
-  it('refuses a retreat that would leave the arena', () => {
-    const { state } = battle({ ...basic, side1: 's_perimeter' }, basic, { positions: [3, 4] })
-    expect(whyCantUse(state, 'side1')).toBe('No room to retreat')
+  it('allows retreat weapons at the arena edge and clamps the retreat to the edge', () => {
+    const { state } = battle({ ...basic, side1: 's_perimeter' }, basic, { positions: [0, 1] })
+    expect(whyCantUse(state, 'side1')).toBeNull()
+    applyAction(state, { type: 'fire', slot: 'side1' })
+    expect(state.fighters[0].position).toBe(0)
   })
 
   it('requires jumping legs for non-melee advance/retreat weapons', () => {
