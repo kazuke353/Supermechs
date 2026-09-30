@@ -7,6 +7,7 @@ import { PALETTES } from './palette'
 import type { PartArt } from './parts'
 import { torsoArt } from './torso'
 import { sideWeaponArt, topWeaponArt } from './weapons'
+import { ARSENAL_ART } from './arsenal'
 
 /** Render resolution relative to design units. */
 const RES = 2
@@ -27,6 +28,11 @@ const iconCache = new Map<string, string>()
 export function partArt(def: ItemDef): PartArt {
   let a = artCache.get(def.id)
   if (a) return a
+  const original = ARSENAL_ART[def.art.kind]
+  if (original) {
+    artCache.set(def.id, original)
+    return original
+  }
   const v = def.art.v ?? []
   switch (def.type) {
     case 'TORSO':
