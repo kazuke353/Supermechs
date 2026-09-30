@@ -14,11 +14,11 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 - Grappling hooks, charge engines and drones that fire on their own.
 - The engine is deterministic and seeded, and is covered by unit tests.
 
-**242 parts**
+**359 parts**
 - Torsos, legs, side and top weapons, drones, specials and modules.
 - Six tiers from Common to Divine, each with its own level cap. Stats scale by tier and level.
 - Weight limit with an overload penalty.
-- Eight additional research-inspired parts, including Blackout Orb, Fractured Slag Dissolver and early-game storage modules. See [item research and balance notes](docs/item-research.md).
+- Research-based additions in two rounds. Expansion I added eight parts, including Blackout Orb and Fractured Slag Dissolver. Expansion II added 117 parts: element counterparts of later game families, new Common starters for the Parts Depot, Epic-tier resistance modules, gap-closer weapons and self-damaging guardian drones. See [item research and balance notes](docs/item-research.md).
 
 **Building your first mech**
 - You start with **1,200 gold and an empty hangar**. Nothing is handed to you.
