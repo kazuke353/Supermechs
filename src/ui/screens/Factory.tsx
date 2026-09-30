@@ -4,7 +4,7 @@ import { audio } from '../../audio/audio'
 import { getItem } from '../../engine/catalog'
 import { scaleStats, TIER_MAX_LEVEL, TIER_NAMES } from '../../engine/stats'
 import type { ItemInstance, ItemType, Tier } from '../../engine/types'
-import { canTransform, fodderXp, fuseCost, KITS, previewLevel, sellValue, transformCost, xpToMax, type KitId } from '../../game/economy'
+import { canTransform, fodderXp, fuseCost, KITS, previewLevel, previewTransform, sellValue, transformCost, xpToMax, type KitId } from '../../game/economy'
 import { buyKit, doTransform, equippedUids, fuse, save, sell, toggleLock } from '../../game/store'
 import { Gold, IconClose, IconLock, Kit, Token } from '../icons'
 import { ElementLabel, InstanceTile, StatList, TierLabel, TYPE_LABEL, XpBar } from '../components/items'
@@ -109,7 +109,8 @@ export function Factory() {
 
   const transformInfo = sel ? canTransform(sel) : null
   const tCost = sel ? transformCost(sel.tier) : null
-  const nextTierStats = sel && selDef && sel.tier < selDef.maxTier ? scaleStats(selDef.stats, (sel.tier + 1) as Tier, 1) : null
+  const nextTierItem = sel && selDef && sel.tier < selDef.maxTier ? previewTransform(sel) : null
+  const nextTierStats = nextTierItem && selDef ? scaleStats(selDef.stats, nextTierItem.tier, nextTierItem.level) : null
 
   return (
     <>
