@@ -60,16 +60,16 @@ export const TIER_MAX_LEVEL: Record<Tier, number> = { 0: 10, 1: 20, 2: 30, 3: 40
 
 /**
  * Stat multiplier relative to Divine max for [level 1, max level] of each tier.
- * Transforming a maxed item gives a meaningful stat increase while leaving
- * room to grow in the new tier.
+ * Higher tiers follow the reference SuperMechs progression: item growth within
+ * a tier is substantial, while the final Mythical-to-Divine gain is smaller.
  */
 const TIER_FACTOR: Record<Tier, [number, number]> = {
-  0: [0.22, 0.32],
-  1: [0.38, 0.45],
-  2: [0.51, 0.59],
-  3: [0.65, 0.74],
-  4: [0.80, 0.88],
-  5: [0.94, 1.0],
+  0: [0.11, 0.18],
+  1: [0.20, 0.27],
+  2: [0.31, 0.43],
+  3: [0.49, 0.66],
+  4: [0.74, 0.97],
+  5: [0.97, 1.0],
 }
 
 export function statFactor(tier: Tier, level: number): number {

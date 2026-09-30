@@ -289,13 +289,19 @@ describe('mech building', () => {
     }
   })
 
-  it('gives a maxed weapon a meaningful boost when it transforms into Divine', () => {
+  it('matches the reference tier growth and final Divine gain', () => {
     const def = getItem('s_duskfall')
+    const epicStart = scaleStats(def.stats, 2, 1)
+    const epicMax = scaleStats(def.stats, 2, 30)
+    const legendaryStart = scaleStats(def.stats, 3, 1)
+    const legendaryMax = scaleStats(def.stats, 3, 40)
+    const mythicalStart = scaleStats(def.stats, 4, 1)
     const mythicMax = scaleStats(def.stats, 4, 50)
-    const divineStart = scaleStats(def.stats, 5, 1)
-    expect(statFactor(5, 1) - statFactor(4, 50)).toBeCloseTo(0.06)
-    expect(divineStart.phyDmg![0]).toBeGreaterThan(mythicMax.phyDmg![0])
-    expect(divineStart.phyDmg![1]).toBeGreaterThan(mythicMax.phyDmg![1])
+    const divineMax = scaleStats(def.stats, 5, 50)
+    expect(epicMax.phyDmg![1] / epicStart.phyDmg![1]).toBeCloseTo(101 / 73, 1)
+    expect(legendaryMax.phyDmg![1] / legendaryStart.phyDmg![1]).toBeCloseTo(156 / 116, 1)
+    expect(mythicMax.phyDmg![1] / mythicalStart.phyDmg![1]).toBeCloseTo(229 / 175, 1)
+    expect(divineMax.phyDmg![1] / mythicMax.phyDmg![1]).toBeCloseTo(236 / 229, 1)
   })
 
   it('costs 15 HP per kg over 1000 and rejects mechs over 1010 kg', () => {
