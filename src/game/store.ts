@@ -52,7 +52,7 @@ function newUid(s: SaveData): string {
 export function grant(s: SaveData, defId: string, tier?: Tier, level = 1): ItemInstance {
   const def = getItem(defId)
   const t = Math.min(def.maxTier, Math.max(def.startTier, tier ?? def.startTier)) as Tier
-  const it: ItemInstance = { uid: newUid(s), defId, tier: t, level: Math.min(level, TIER_MAX_LEVEL[t]), xp: 0, n: s.counter }
+  const it: ItemInstance = { uid: newUid(s), defId, tier: t, level: t === 5 ? TIER_MAX_LEVEL[5] : Math.min(level, TIER_MAX_LEVEL[t]), xp: 0, n: s.counter }
   s.inventory.push(it)
   if (t >= 3) s.stats.legendaries++
   return it

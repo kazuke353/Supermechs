@@ -4,19 +4,47 @@ import { applyAction, createBattle } from '../src/engine/battle'
 import { getItem } from '../src/engine/catalog'
 import { resolveItem, summarize, validateLoadout } from '../src/engine/mech'
 import { Rng } from '../src/engine/rng'
-import { TIER_MAX_LEVEL } from '../src/engine/stats'
+import { scaleStats, TIER_MAX_LEVEL } from '../src/engine/stats'
 import type { ItemInstance, Loadout, SlotName } from '../src/engine/types'
 import { applyResult, bronzeSize, makeOpponent, opponentPower, starsNeeded } from '../src/game/arena'
 import { BOX_MAP, openBox } from '../src/game/boxes'
 import { CHAPTERS, isUnlocked, missionLoadout, MISSIONS } from '../src/game/campaign'
 import { DEPOT_STOCK, depotPrice, essentialOf } from '../src/game/depot'
-import { addXp, canTransform, fodderXp, KITS, sellValue, transform, transformCost, xpForTier, xpToMax } from '../src/game/economy'
+import { addXp, canTransform, fodderXp, KITS, previewTransform, sellValue, transform, transformCost, xpForTier, xpToMax } from '../src/game/economy'
 import { PLAYSTYLES, sampleCost } from '../src/game/playstyles'
 import { defaultSave, exportCode, importCode, migrate, STARTING_GOLD } from '../src/game/save'
 import * as store from '../src/game/store'
 import { currentStep, tutorialActive, tutorialSteps, TUTORIAL_REWARD } from '../src/game/tutorial'
 
 describe('economy', () => {
+  it('previews and grants Backdraft’s full Divine stats on transformation', () => {
+    const item: ItemInstance = { uid: 'backdraft', defId: 's_backdraft', tier: 4, level: 50, xp: 0 }
+    const def = getItem(item.defId)
+    const before = scaleStats(def.stats, item.tier, item.level)
+    expect(before.expDmg).toEqual([168, 345])
+    expect(before.heaDmg).toBe(59)
+    const preview = previewTransform(item)
+    expect(item.tier).toBe(4)
+    expect(preview).toMatchObject({ tier: 5, level: TIER_MAX_LEVEL[5], xp: 0 })
+    const previewStats = scaleStats(def.stats, preview.tier, preview.level)
+    expect(previewStats.expDmg).toEqual([173, 356])
+    expect(previewStats.heaDmg).toBe(61)
+    transform(item)
+    expect(item).toEqual(preview)
+    expect(scaleStats(def.stats, item.tier, item.level)).toEqual(previewStats)
+    expect(xpToMax(item)).toBe(0)
+  })
+
+  it('finishes existing Divine items on save load without changing Mythical items', () => {
+    const divine: ItemInstance = { uid: 'divine', defId: 's_backdraft', tier: 5, level: 1, xp: 20 }
+    const mythical: ItemInstance = { uid: 'mythical', defId: 's_backdraft', tier: 4, level: 50, xp: 0 }
+    const loaded = migrate({ ...defaultSave(), inventory: [divine, mythical] })
+    expect(loaded.inventory[0]).toEqual({ ...divine, level: TIER_MAX_LEVEL[5], xp: 0 })
+    expect(loaded.inventory[1]).toEqual(mythical)
+    expect(divine.level).toBe(1)
+    expect(migrate(loaded).inventory).toEqual(loaded.inventory)
+  })
+
   it('levels items up and stops at the tier cap', () => {
     const it: ItemInstance = { uid: 'a', defId: 's_servicerifle', tier: 0, level: 1, xp: 0 }
     expect(xpToMax(it)).toBe(xpForTier(0))
@@ -165,6 +193,31 @@ function buildFullMech() {
 
 describe('store', () => {
   beforeEach(() => store.newGame('Tester'))
+
+  it('charges for the final transformation once and delivers the previewed stats', () => {
+    let uid = ''
+    store.update((s) => {
+      s.gold = 20_000
+      s.tokens = 100
+      uid = store.grant(s, 's_backdraft', 4, 50).uid
+    })
+    expect(store.doTransform(uid)).toBeNull()
+    const s = store.save.value
+    const item = store.findItem(s, uid)!
+    expect(item).toMatchObject({ tier: 5, level: TIER_MAX_LEVEL[5], xp: 0 })
+    expect(s.gold).toBe(5_000)
+    expect(s.tokens).toBe(20)
+    expect(scaleStats(getItem(item.defId).stats, item.tier, item.level).expDmg).toEqual([173, 356])
+    expect(store.doTransform(uid)).toBe('Already at its highest tier')
+    expect(s.gold).toBe(5_000)
+    expect(s.tokens).toBe(20)
+  })
+
+  it('grants new Divine drops at their finished level', () => {
+    const item = store.grant(store.save.value, 's_backdraft', 5)
+    expect(item.level).toBe(TIER_MAX_LEVEL[5])
+    expect(xpToMax(item)).toBe(0)
+  })
 
   it('fuses fodder into a target and charges gold', () => {
     buildFullMech()

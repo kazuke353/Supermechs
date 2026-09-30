@@ -1,4 +1,5 @@
 import type { ItemInstance, SlotName, Tier } from '../engine/types'
+import { TIER_MAX_LEVEL } from '../engine/stats'
 import type { KitId } from './economy'
 
 export interface MechSetup {
@@ -138,7 +139,10 @@ export function migrate(raw: unknown): SaveData {
     stats: { ...base.stats, ...r.stats },
     daily: { ...base.daily, ...r.daily },
     settings: { ...base.settings, ...r.settings },
-    inventory: (r.inventory ?? []).map((i) => ({ ...i, tier: Math.max(0, Math.min(5, i.tier)) as Tier })),
+    inventory: (r.inventory ?? []).map((i) => {
+      const tier = Math.max(0, Math.min(5, i.tier)) as Tier
+      return tier === 5 ? { ...i, tier, level: TIER_MAX_LEVEL[5], xp: 0 } : { ...i, tier }
+    }),
     version: SAVE_VERSION,
   }
 }
