@@ -71,9 +71,12 @@ export interface ItemTags {
 
 /** Procedural art descriptor. Interpreted by src/art. */
 export interface ArtSpec {
+  /** Drawing family. Also selects battle effects (muzzle flash, projectile, sound). */
   kind: string
   /** Free-form numeric knobs for the drawing routine (sizes, counts, variants). */
   v?: number[]
+  /** Optional hand-drawn routine from src/art/armory.ts. Overrides the drawing, never the effects. */
+  sprite?: string
 }
 
 export interface ItemDef {
