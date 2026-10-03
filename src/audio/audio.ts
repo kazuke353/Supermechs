@@ -6,6 +6,8 @@
 
 export type SfxName =
   | 'click'
+  | 'hype'
+  | 'alarm'
   | 'equip'
   | 'coin'
   | 'error'
@@ -312,6 +314,15 @@ class AudioEngine {
         break
       case 'overheat':
         ;[0, 0.22].forEach((d) => this.tone({ type: 'square', freq: 880, to: 440, dur: 0.18, gain: 0.12 * v, delay: d, pan }))
+        break
+      case 'hype': {
+        const base = 523 * p
+        ;[1, 1.26, 1.5, 2].forEach((m, i) => this.tone({ type: 'square', freq: base * m, dur: 0.12, gain: 0.06 * v, delay: i * 0.05 }))
+        this.noise({ dur: 0.3, filter: 'highpass', freq: 4000, to: 9000, gain: 0.12 * v, delay: 0.12 })
+        break
+      }
+      case 'alarm':
+        ;[0, 0.28].forEach((d) => this.tone({ type: 'sawtooth', freq: 660, to: 990, dur: 0.22, gain: 0.07 * v, delay: d }))
         break
       case 'turn':
         this.tone({ type: 'triangle', freq: 660, dur: 0.08, gain: 0.08 * v })

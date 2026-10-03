@@ -62,6 +62,7 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 **Presentation**
 - Illustrated battle backdrops.
 - Muzzle flashes, beams, missiles, debris, screen shake and damage numbers.
+- Battle hype: combo and big-hit callouts (First Blood, Massive, Overkill), hit-stop and camera punch on heavy hits, a slow-motion finishing blow, victory confetti, pilot trash talk in speech bubbles, a red danger alarm when your mech is nearly scrapped, and highlight badges (Flawless, Clutch, Comeback, Best combo) on the results screen. All of it is cosmetic and never touches the battle rules.
 - Synthesized sound effects and music.
 - Keyboard shortcuts and a phone layout.
 

@@ -275,6 +275,15 @@ function Results({ session, end, summary, onClose }: { session: BattleSession; e
           Damage dealt {me.stats.damageDealt.toLocaleString()} · Biggest hit {me.stats.biggestHit.toLocaleString()} · HP left{' '}
           {Math.max(0, Math.round((end.hp[humans[0] ?? 0] ?? 0) * 100))}%
         </p>
+        {end.highlights.length > 0 && (
+          <div class="highlights">
+            {end.highlights.map((h, i) => (
+              <span class="highlight" key={h} style={{ animationDelay: `${0.25 + i * 0.15}s` }}>
+                {h}
+              </span>
+            ))}
+          </div>
+        )}
         {summary && (
           <div class="rewards">
             {summary.gold > 0 && (
