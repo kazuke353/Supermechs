@@ -2629,6 +2629,41 @@ p {
   color: var(--red-hi);
 }
 
+.highlights {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+.highlight {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border: 2px solid var(--gold-hi);
+  border-radius: 999px;
+  color: var(--gold-hi);
+  background: rgba(255, 190, 40, 0.1);
+  box-shadow: 0 0 14px rgba(255, 190, 40, 0.35);
+  animation: highlight-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes highlight-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight {
+    animation: none;
+  }
+}
+
 .rewards {
   display: flex;
   gap: 10px;

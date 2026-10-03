@@ -105,6 +105,23 @@ interface Banner {
   max: number
 }
 
+interface Callout {
+  text: string
+  color: string
+  /** Where across the screen it sits: 0 left, 1 right. */
+  at: number
+  tilt: number
+  life: number
+  max: number
+}
+
+interface Bubble {
+  side: Side
+  text: string
+  life: number
+  max: number
+}
+
 export interface FighterVis {
   vis: MechVisual
   items: VisualLoadout
@@ -232,6 +249,16 @@ export class BattleScene {
   private projectiles: Projectile[] = []
   private debris: Debris[] = []
   private banners: Banner[] = []
+  private callouts: Callout[] = []
+  private bubbles: Bubble[] = []
+  /** Real seconds left to freeze the action (hit-stop). */
+  private freeze = 0
+  /** Slow motion: time scale and how many real seconds it lasts. */
+  private slow = { k: 1, left: 0 }
+  /** Extra camera zoom that springs back after a big hit. */
+  private punchAmt = 0
+  /** Red pulse at the screen edges while a mech is near death (0..1 per side). */
+  danger: [number, number] = [0, 0]
   private shakeAmt = 0
   private flashAmt = 0
   private flashColor = '#ffffff'
@@ -339,7 +366,7 @@ export class BattleScene {
     this.cam.x += (t.x - this.cam.x) * a
     this.cam.y += (t.y - this.cam.y) * a
     this.cam.k += (t.k - this.cam.k) * a
-    const { k } = this.cam
+    const k = this.cam.k * (1 + this.punchAmt)
     this.view.k = k
     this.view.ox = this.box.w / 2 - this.cam.x * k
     this.view.oy = this.box.h / 2 - this.cam.y * k
@@ -446,6 +473,48 @@ export class BattleScene {
 
   banner(text: string, color: string, sub?: string, ms = 1100) {
     this.banners = [{ text, sub, color, life: ms / 1000, max: ms / 1000 }]
+  }
+
+  /** A punchy, tilted shout-out (COMBO, MASSIVE, ...) on the attacker's side of the screen. */
+  callout(text: string, color: string, side: Side, ms = 1200) {
+    const f = this.fighters[side]
+    const at = f.x < VW / 2 ? 0.27 : 0.73
+    this.callouts.push({ text, color, at, tilt: (side === 0 ? -1 : 1) * (0.08 + Math.random() * 0.05), life: ms / 1000, max: ms / 1000 })
+  }
+
+  /** Pilot chatter in a speech bubble above the mech. */
+  quip(side: Side, text: string, ms = 1900) {
+    if (this.fighters[side].destroyed) return
+    this.bubbles = this.bubbles.filter((b) => b.side !== side)
+    this.bubbles.push({ side, text, life: ms / 1000, max: ms / 1000 })
+  }
+
+  /** Freeze the action for a beat so a big hit lands with weight. */
+  hitStop(ms: number) {
+    this.freeze = Math.max(this.freeze, ms / 1000 / Math.max(1, this.speed))
+  }
+
+  /** Slow time down for `ms` real milliseconds. */
+  slowMo(k: number, ms: number) {
+    if (this.reducedMotion) return
+    this.slow = { k, left: ms / 1000 }
+  }
+
+  /** Quick camera zoom toward the action that springs back. */
+  punch(amount: number) {
+    if (this.reducedMotion) return
+    this.punchAmt = Math.min(0.12, Math.max(this.punchAmt, amount))
+  }
+
+  /** Victory confetti raining over the winner. */
+  confetti(side: Side) {
+    const f = this.fighters[side]
+    const colors = ['#ffb627', '#5aff6e', '#6ff0ff', '#ff5ad1', '#ffffff', '#c77dff']
+    for (let i = 0; i < 3; i++) {
+      this.burst(f.x, GROUND - 260, 40, { speed: 520, life: 2.6, size: 7, colors, gravity: 520, drag: 0.94, shape: 'square', angle: -Math.PI / 2, spread: Math.PI * 0.9 })
+    }
+    for (let i = 0; i < 60; i++)
+      this.emit({ x: BG_L + Math.random() * (BG_R - BG_L), y: 80 - Math.random() * 200, vx: (Math.random() - 0.5) * 80, vy: 80 + Math.random() * 120, life: 4, size: 6, color: colors[i % colors.length], drag: 0.99, gravity: 60, shape: 'square' })
   }
 
   // -------------------------------------------------------------------------
@@ -1002,9 +1071,17 @@ export class BattleScene {
   private frame = (now: number) => {
     const rawDt = Math.min(0.05, (now - this.last) / 1000)
     this.last = now
-    const dt = rawDt * this.speed
+    let dt = rawDt * this.speed
+    if (this.freeze > 0) {
+      this.freeze -= rawDt
+      dt = 0
+    } else if (this.slow.left > 0) {
+      this.slow.left -= rawDt
+      dt *= this.slow.k
+    }
     this.time += dt
     this.update(dt)
+    this.updateHype(rawDt)
     this.updateCamera(rawDt)
     this.draw()
     this.raf = requestAnimationFrame(this.frame)
@@ -1080,6 +1157,15 @@ export class BattleScene {
     this.shakeAmt = Math.max(0, this.shakeAmt - dt * 60)
     this.flashAmt = Math.max(0, this.flashAmt - dt * 2.5)
     this.ambient(dt)
+  }
+
+  /** Overlays that run on real time so they keep moving through hit-stop and slow motion. */
+  private updateHype(dt: number) {
+    for (const c of this.callouts) c.life -= dt
+    this.callouts = this.callouts.filter((c) => c.life > 0)
+    for (const b of this.bubbles) b.life -= dt
+    this.bubbles = this.bubbles.filter((b) => b.life > 0)
+    this.punchAmt = Math.max(0, this.punchAmt - dt * 0.35)
   }
 
   private ambient(dt: number) {
@@ -1270,6 +1356,8 @@ export class BattleScene {
     }
     ctx.globalAlpha = 1
 
+    for (const b of this.bubbles) this.drawBubble(ctx, b)
+
     // Screen-space overlays: they stay centred and readable whatever the camera does.
     const { w: sw, h: sh } = this.box
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -1317,12 +1405,91 @@ export class BattleScene {
       ctx.globalAlpha = 1
     }
 
+    this.drawDanger(ctx, sw, sh)
+    for (const c of this.callouts) this.drawCallout(ctx, c, sw, sh)
+
     if (this.flashAmt > 0) {
       ctx.globalAlpha = this.flashAmt
       ctx.fillStyle = this.flashColor
       ctx.fillRect(0, 0, sw, sh)
       ctx.globalAlpha = 1
     }
+  }
+
+  private drawBubble(ctx: Ctx, b: Bubble) {
+    const f = this.fighters[b.side]
+    if (f.destroyed) return
+    const age = b.max - b.life
+    const a = Math.min(1, age / 0.12, b.life / 0.3)
+    const pop = 0.7 + 0.3 * ease.outBack(Math.min(1, age / 0.25))
+    const x = f.x
+    // Two bubbles over mechs standing close together stack instead of overlapping.
+    const other = this.bubbles.find((o) => o.side !== b.side)
+    const stacked = other && b.side === 1 && Math.abs(this.fighters[other.side].x - x) < 300
+    const y = this.groundY(f) - 290 - (stacked ? 52 : 0) + Math.sin(this.time * 3) * 3
+    ctx.save()
+    ctx.globalAlpha = a
+    ctx.translate(x, y)
+    ctx.scale(pop, pop)
+    ctx.font = '800 22px "Exo 2", "Arial Black", sans-serif'
+    const w = ctx.measureText(b.text).width + 32
+    const h = 42
+    ctx.fillStyle = 'rgba(250,252,255,0.96)'
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 4
+    ctx.beginPath()
+    ctx.roundRect(-w / 2, -h / 2, w, h, 14)
+    ctx.moveTo(-10, h / 2 - 1)
+    ctx.lineTo(-f.facing * 4, h / 2 + 18)
+    ctx.lineTo(10, h / 2 - 1)
+    ctx.stroke()
+    ctx.fill()
+    ctx.fillStyle = '#0b1018'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(b.text, 0, 1)
+    ctx.restore()
+  }
+
+  private drawCallout(ctx: Ctx, c: Callout, sw: number, sh: number) {
+    const age = c.max - c.life
+    const inT = Math.min(1, age / 0.18)
+    const a = Math.min(1, c.life / 0.3)
+    const idx = this.callouts.filter((o) => o.at === c.at).indexOf(c)
+    const size = Math.max(26, Math.min(64, sw / 16))
+    ctx.save()
+    ctx.globalAlpha = a
+    ctx.translate(sw * c.at, sh * 0.2 + idx * size * 1.35 - age * 14)
+    ctx.rotate(c.tilt)
+    const s = 1.6 - 0.6 * ease.outBack(inT)
+    ctx.scale(s, s)
+    ctx.font = `italic ${Math.round(size)}px "Russo One", "Arial Black", sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.lineJoin = 'round'
+    ctx.lineWidth = size * 0.22
+    ctx.strokeStyle = '#000'
+    ctx.strokeText(c.text, 0, 0)
+    ctx.shadowColor = c.color
+    ctx.shadowBlur = 20
+    ctx.fillStyle = c.color
+    ctx.fillText(c.text, 0, 0)
+    ctx.shadowBlur = 0
+    ctx.globalAlpha = a * 0.6
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText(c.text, -2, -2)
+    ctx.restore()
+  }
+
+  private drawDanger(ctx: Ctx, sw: number, sh: number) {
+    const d = Math.max(this.danger[0], this.danger[1])
+    if (d <= 0) return
+    const pulse = this.reducedMotion ? 0.6 : 0.5 + 0.5 * Math.sin(this.time * 7)
+    const g = ctx.createRadialGradient(sw / 2, sh / 2, Math.min(sw, sh) * 0.35, sw / 2, sh / 2, Math.max(sw, sh) * 0.75)
+    g.addColorStop(0, 'rgba(255,30,50,0)')
+    g.addColorStop(1, `rgba(255,30,50,${0.32 * d * pulse})`)
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, sw, sh)
   }
 
   private drawTiles(ctx: Ctx) {

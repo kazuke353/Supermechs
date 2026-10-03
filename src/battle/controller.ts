@@ -26,6 +26,7 @@ import type { VisualLoadout } from '../art/mech'
 import type { SceneId } from '../game/campaign'
 import { audio } from '../audio/audio'
 import { BattleScene } from './scene'
+import { HypeTracker, quip, type HitHype } from './hype'
 
 export type Control = 'human' | 'ai' | 'remote'
 export type BattleMode = 'campaign' | 'arena' | 'workshop' | 'local' | 'online' | 'run'
@@ -67,6 +68,8 @@ export interface EndInfo {
   /** Stats for side 0 (the local player in single-player modes). */
   stats: BattleState['fighters']
   hp: [number, number]
+  /** Fun badges for the local player (Flawless, Clutch, Best combo, ...). */
+  highlights: string[]
 }
 
 function visual(l: Loadout): VisualLoadout {
@@ -90,6 +93,7 @@ export class BattleController {
   private pending: BattleEvent[]
   private destroyed = false
   private queue: Promise<void> = Promise.resolve()
+  readonly hype = new HypeTracker()
   speed = 1
 
   constructor(setup: BattleSetup) {
@@ -178,7 +182,8 @@ export class BattleController {
     this.state.endReason = 'forfeit'
     this.state.actionsLeft = 0
     const f = this.state.fighters
-    this.end.value = { winner, reason: 'forfeit', stats: f, hp: [f[0].hp / f[0].hpMax, f[1].hp / f[1].hpMax] }
+    const hp: [number, number] = [f[0].hp / f[0].hpMax, f[1].hp / f[1].hpMax]
+    this.end.value = { winner, reason: 'forfeit', stats: f, hp, highlights: this.highlights(winner, hp) }
   }
 
   private afterIdle() {
@@ -200,6 +205,38 @@ export class BattleController {
     return this.setup.players[side].name
   }
 
+  private highlights(winner: Side, hp: [number, number]): string[] {
+    const me = this.humanSides.length === 1 ? this.humanSides[0] : winner
+    return this.hype.highlights(me, me === winner, hp[me])
+  }
+
+  private isHuman(side: Side) {
+    return this.setup.players[side].control === 'human'
+  }
+
+  /** Callouts, hit-stop, chatter and the danger alarm for one landed hit. */
+  private cheer(attacker: Side, h: HitHype) {
+    const scene = this.scene!
+    const target = opponentOf(attacker)
+    for (const c of h.callouts) scene.callout(c.text, c.color, attacker)
+    if (h.callouts.length) audio.play('hype', { pitch: 1 + 0.12 * Math.min(4, this.hype.combo[attacker]) })
+    if (h.impact) {
+      scene.hitStop(h.impact === 2 ? 150 : 90)
+      scene.punch(h.impact === 2 ? 0.08 : 0.045)
+    }
+    if (h.danger) {
+      if (this.isHuman(target)) {
+        scene.danger[target] = 1
+        audio.play('alarm')
+      } else scene.callout('FINISH IT!', '#5aff6e', attacker, 1400)
+      scene.quip(target, quip('danger'))
+    } else if (h.thread) scene.quip(target, quip('thread'))
+    else if (h.impact && Math.random() < 0.6) {
+      const speaker = Math.random() < 0.5 ? attacker : target
+      scene.quip(speaker, quip(speaker === attacker ? 'dealt' : 'taken'))
+    }
+  }
+
   private pushLog(entry: LogEntry) {
     const l = this.log.value
     this.log.value = [...l.slice(-120), entry]
@@ -210,8 +247,15 @@ export class BattleController {
     for (const ev of events) {
       if (this.destroyed || !scene) return
       switch (ev.t) {
-        case 'start':
+        case 'start': {
+          const talker = this.humanSides[0] ?? ev.first
+          scene.quip(talker, quip('start'))
+          if (Math.random() < 0.6) {
+            await scene.wait(700)
+            scene.quip(opponentOf(talker), quip('start'))
+          }
           break
+        }
         case 'turn': {
           const humans = this.humanSides
           let text: string
@@ -261,21 +305,24 @@ export class BattleController {
         case 'end': {
           const loser = opponentOf(ev.winner)
           if (ev.snap) this.hud.value = ev.snap
-          if (ev.reason === 'destroyed') await scene.destroyMech(loser)
+          if (ev.reason === 'destroyed') {
+            scene.slowMo(0.4, 1500)
+            scene.punch(0.1)
+            await scene.destroyMech(loser)
+          }
+          scene.danger = [0, 0]
           const humans = this.humanSides
           let text = `${this.name(ev.winner).toUpperCase()} WINS`
           if (humans.length === 1) text = humans[0] === ev.winner ? 'VICTORY' : 'DEFEAT'
           const won = humans.length !== 1 || humans[0] === ev.winner
           audio.play(won ? 'victory' : 'defeat')
+          if (won) scene.confetti(ev.winner)
+          scene.quip(ev.winner, quip('win'))
           scene.banner(text, won ? '#ffb627' : '#ff4a5f', ev.reason === 'forfeit' ? 'by forfeit' : ev.reason === 'timeout' ? 'turn limit reached' : undefined, 1800)
           this.pushLog({ side: ev.winner, text: `${this.name(ev.winner)} wins${ev.reason === 'forfeit' ? ' by forfeit' : ev.reason === 'timeout' ? ' on the turn limit' : ''}!`, kind: 'info' })
           await scene.wait(1600)
-          this.end.value = {
-            winner: ev.winner,
-            reason: ev.reason,
-            stats: this.state.fighters,
-            hp: [this.state.fighters[0].hp / this.state.fighters[0].hpMax, this.state.fighters[1].hp / this.state.fighters[1].hpMax],
-          }
+          const hp: [number, number] = [this.state.fighters[0].hp / this.state.fighters[0].hpMax, this.state.fighters[1].hp / this.state.fighters[1].hpMax]
+          this.end.value = { winner: ev.winner, reason: ev.reason, stats: this.state.fighters, hp, highlights: this.highlights(ev.winner, hp) }
           break
         }
       }
@@ -351,6 +398,13 @@ export class BattleController {
       if (ev.damage > 0) {
         scene.impact(target, ev.element, ev.damage)
         scene.damageText(target, ev.damage, ev.element, ev.damage >= 500)
+        const before = this.hud.value?.fighters[target]
+        const after = ev.snap?.fighters[target]
+        if (before && after)
+          this.cheer(
+            ev.player,
+            this.hype.hit({ attacker: ev.player, damage: ev.damage, breakBonus: ev.breakBonus, hpBefore: before.hp, hpAfter: after.hp, hpMax: after.hpMax }),
+          )
       }
       if (ev.breakBonus) scene.statText(target, `ENERGY BREAK +${ev.breakBonus}`, '#ffffff')
       const d = ev.targetDelta
