@@ -272,8 +272,8 @@ top('tp_frayedscope', 'Frayed Scope', E, 'L-D', { weight: 30, dmg: [531, 852], e
 
 // ---------------------------------------------------------------------------
 // Drones. art v = [shape] 0 rotor, 1 saucer, 2 orb, 3 jet, 4 bat
-function drone(id: string, name: string, el: Element, range: string, s: Short, shape: number) {
-  add('DRONE', id, name, el, range, s, { kind: 'drone', v: [shape] })
+function drone(id: string, name: string, el: Element, range: string, s: Short, shape: number, lore?: string) {
+  add('DRONE', id, name, el, range, s, { kind: 'drone', v: [shape] }, lore ? { lore } : {})
 }
 drone('d_buzz', 'Buzz Drone', P, 'C-L', { weight: 25, dmg: [100, 140], eneCost: 10, heaCost: 10 }, 0)
 drone('d_nullbot', 'Nullbot', P, 'E-D', { weight: 29, dmg: [147, 192], phyResDmg: 6, eneCost: 16, heaCost: 16 }, 2)
@@ -309,8 +309,8 @@ drone('d_volatileguard', 'Volatile Guardian', E, 'L-D', { weight: 48, dmg: [147,
 
 // ---------------------------------------------------------------------------
 // Specials
-function special(type: ItemType, id: string, name: string, el: Element, range: string, s: Short, kind: string, v = 0) {
-  add(type, id, name, el, range, s, { kind, v: [v] })
+function special(type: ItemType, id: string, name: string, el: Element, range: string, s: Short, kind: string, v = 0, lore?: string) {
+  add(type, id, name, el, range, s, { kind, v: [v] }, lore ? { lore } : {})
 }
 special('CHARGE_ENGINE', 'c_ram', 'Ram Booster', P, 'C-E', { weight: 22, dmg: [90, 130], push: 1, range: [2, 9], uses: 1 }, 'charge', 2)
 special('CHARGE_ENGINE', 'c_rocket', 'Rocket Charger', P, 'E-D', { weight: 20, dmg: [137, 180], push: 1, range: [2, 9], uses: 1 }, 'charge', 0)
@@ -329,8 +329,8 @@ special('GRAPPLING_HOOK', 'h_shock', 'Shock Hook', E, 'L-D', { weight: 11, dmg: 
 
 // ---------------------------------------------------------------------------
 // Modules. art v = [icon] 0 plating, 1 shield, 2 heat, 3 energy, 4 combo, 5 fortress, 6 cooler, 7 battery
-function mod(id: string, name: string, el: Element, range: string, s: Short, icon: number) {
-  add('MODULE', id, name, el, range, s, { kind: 'module', v: [icon] })
+function mod(id: string, name: string, el: Element, range: string, s: Short, icon: number, lore?: string) {
+  add('MODULE', id, name, el, range, s, { kind: 'module', v: [icon] }, lore ? { lore } : {})
 }
 mod('m_scrapplating', 'Scrap Plating', P, 'C-R', { weight: 35, health: 95 }, 0)
 mod('m_ironplating', 'Iron Plating', P, 'C-E', { weight: 40, health: 145 }, 0)
@@ -548,6 +548,228 @@ add('DRONE', 'd_embermanta', 'Ember Manta', X, 'E-D', { weight: 46, dmg: [115, 1
   { lore: 'A flying furnace under swept manta wings. Energy-free pressure every turn costs its pilot both heat and health.' })
 add('DRONE', 'd_capacitorjelly', 'Capacitor Jelly', E, 'R-D', { weight: 39, dmg: [100, 165], eneDmg: 52, eneCost: 38, heaCost: 8 }, { kind: 'capacitor-jelly' },
   { lore: 'Hanging capacitors pulse beneath a hover dome. A light drain companion, dependent on its pilot battery.' })
+
+// ---------------------------------------------------------------------------
+// Expansion IV: the Armory. Research, sources and balance notes live in
+// docs/armory-research.md. Two kinds of entries: element and tier counterparts
+// of families in the final game client (names only, no published numbers) and
+// archetypes from the old client's published stat tables that the Reloaded
+// catalog folded away. Everything is tuned against an existing sibling named in
+// the comment above each group. New IDs only, so older saves keep every part.
+
+const L = (lore: string): Partial<ItemDef> => ({ lore })
+const M = (lore: string): Partial<ItemDef> => ({ tags: { melee: true }, lore })
+
+/** Point items at a hand-drawn routine in src/art/armory.ts. Combat effects still follow art.kind. */
+function skin(sprite: string, ...ids: string[]) {
+  for (const id of ids) {
+    const item = items.find((i) => i.id === id)
+    if (!item) throw new Error(`skin: unknown item ${id}`)
+    item.art = { ...item.art, sprite }
+  }
+}
+
+// Torsos. Wardens mirror Warden with the starved resource swapped; the Foundries are
+// Magmaheart's heat lean on other elements; Custodians are the old Guardian trio
+// (big reserves, no armor); Sovereigns are armor-tank Mythical frames that trade reserves for plating.
+torso('t_slagwarden', 'Slagwarden', X, 'E-D', [348, 1285, 150, 44, 300, 98, 16, 22, 22], [3, 2, 2], 'Warden hit points around a deep heat sink. The battery is an afterthought.')
+torso('t_stormwarden', 'Stormwarden', E, 'E-D', [348, 1285, 300, 100, 150, 46, 16, 22, 22], [3, 2, 3], 'Warden hit points around a deep battery. Keep it cool or keep it short.')
+torso('t_foundryhull', 'Foundry Hull', P, 'E-D', [354, 1180, 205, 62, 318, 108, 22, 16, 16], [4, 2, 1], 'Heat-leaning plating for pilots who run kinetic weapons and hot support gear.')
+torso('t_sparkfoundry', 'Spark Foundry', E, 'E-D', [354, 1170, 322, 110, 205, 66, 16, 16, 22], [4, 2, 2], 'A humming battery bank in a heavy shell, with a modest radiator.')
+torso('t_reactorframe', 'Reactor Frame', P, 'L-D', [342, 840, 340, 112, 320, 104, 14, 14, 14], [2, 2, 2], 'Huge reserves and fast recovery in thin plating. Built to outlast opponents, not to absorb hits.')
+torso('t_brasscustodian', 'Brass Custodian', P, 'E-D', [356, 1190, 290, 77, 290, 77], [1, 1, 2], 'Evenly stocked reserves and no armor. Costs weight, buys capacity.')
+torso('t_cindercustodian', 'Cinder Custodian', X, 'E-D', [356, 1190, 235, 58, 345, 96], [1, 1, 3], 'The heat-leaning Custodian, for pilots who burn first and cool later.')
+torso('t_voltcustodian', 'Volt Custodian', E, 'E-D', [356, 1190, 345, 96, 235, 58], [1, 1, 1], 'The energy-leaning Custodian, for long drains and heavy generators.')
+torso('t_prismshell', 'Prism Shell', X, 'L-D', [340, 780, 230, 90, 240, 96, 34, 34, 34], [0, 2, 3], 'A crystalline glass fortress. Hits barely scratch it, but there is little under the shell.')
+torso('t_ironsovereign', 'Iron Sovereign', P, 'M-D', [370, 1520, 295, 94, 295, 94, 36, 36, 36], [5, 0, 2], 'Mythical plating with deep reserves. Trades raw hit points for armor against everything.')
+torso('t_magmasovereign', 'Magma Sovereign', X, 'M-D', [368, 1400, 190, 56, 330, 112, 30, 40, 30], [5, 0, 3], 'Mythical armor-tank with a molten core. Trades battery for hit points and plating.')
+torso('t_tempestsovereign', 'Tempest Sovereign', E, 'M-D', [366, 1360, 300, 100, 190, 58, 34, 34, 44], [5, 0, 1], 'Mythical armor-tank wired to the storm. Trades cooling for hit points and insulation.')
+
+// Legs. Hoppers trade stomp strength for a long jump; Marchers walk two tiles and hop one;
+// Crawlers give up the jump for hit points, between Stompers and the Anchor family.
+legs('l_longhoppers', 'Longhop Hoppers', P, 'E-D', { weight: 133, health: 360, dmg: [150, 210], push: 1, walk: 1, jump: 4 }, 5, 'Piston legs that clear four tiles in one bound. Fragile when they land.')
+legs('l_cinderleapers', 'Cinder Leapers', X, 'E-D', { weight: 124, health: 335, dmg: [135, 190], heaDmg: 36, push: 1, walk: 1, jump: 4 }, 5, 'Rocket-assisted legs with a four-tile leap and a scorched landing.')
+legs('l_voltleapers', 'Volt Leapers', E, 'E-D', { weight: 124, health: 335, dmg: [135, 190], eneDmg: 46, push: 1, walk: 1, jump: 4 }, 5, 'Capacitor legs that launch four tiles and discharge on touchdown.')
+legs('l_routemarchers', 'Route Marchers', P, 'E-D', { weight: 130, health: 455, dmg: [155, 225], push: 1, walk: 2, jump: 1 }, 0, 'Two steady tiles a step and a short hop for obstacles.')
+legs('l_embermarchers', 'Ember Marchers', X, 'E-D', { weight: 121, health: 425, dmg: [140, 205], heaDmg: 42, push: 1, walk: 2, jump: 1 }, 0, 'Hot-soled marchers. Two tiles a step and a branding kick.')
+legs('l_staticmarchers', 'Static Marchers', E, 'E-D', { weight: 122, health: 420, dmg: [140, 205], eneDmg: 52, push: 1, walk: 2, jump: 1 }, 0, 'Charged marchers. Two tiles a step and a draining kick.')
+legs('l_hullcrawlers', 'Hull Crawlers', P, 'R-D', { weight: 140, health: 700, dmg: [110, 160], walk: 1 }, 3, 'Armored tracks that crawl one tile. Never jump, never fold.')
+legs('l_slagcrawlers', 'Slag Crawlers', X, 'R-D', { weight: 138, health: 665, dmg: [96, 145], heaDmg: 30, walk: 1 }, 3, 'Smoldering tracks that crawl one tile and scorch what they roll over.')
+legs('l_arccrawlers', 'Arc Crawlers', E, 'R-D', { weight: 138, health: 665, dmg: [96, 145], eneDmg: 34, walk: 1 }, 3, 'Insulated tracks that crawl one tile and bleed batteries on contact.')
+legs('l_staticboots', 'Static Boots', E, 'R-D', { weight: 126, health: 450, dmg: [155, 205], eneDmg: 48, push: 1, walk: 1, jump: 2 }, 0, 'The Electric answer to Rockfall Stompers and Flarestep Boots: the same jump boots with a draining heel.')
+legs('l_siegewalkers', 'Siege Walkers', P, 'M-D', { weight: 158, health: 780, dmg: [190, 260], push: 2, walk: 2, jump: 1 }, 2, 'Mythical walkers built to carry a fortress. Two tiles a step and a kick that shoves.')
+legs('l_infernostriders', 'Inferno Striders', X, 'M-D', { weight: 144, health: 560, dmg: [180, 240], heaDmg: 70, push: 2, walk: 2, jump: 2 }, 1, 'Mythical striders that leave glowing prints. Walks two, hops two.')
+legs('l_tempeststriders', 'Tempest Striders', E, 'M-D', { weight: 146, health: 560, dmg: [180, 240], eneDmg: 84, push: 2, walk: 2, jump: 2 }, 1, 'Mythical striders that crackle with static. Walks two, hops two.')
+
+// Side weapons: heavy axes. Four swings, no push and no energy bill; Cleaver trades the
+// swings for push 1 and a lighter frame.
+side('s_bruteaxe', 'Brute Axe', P, 'E-D', { weight: 66, dmg: [290, 470], phyResDmg: 14, range: [1, 1], uses: 4, heaCost: 22 }, 'axe', 0, M('Four hard swings and no energy bill. Much heavier than a Cleaver, but easier on the radiators.'))
+side('s_cinderaxe', 'Cinder Axe', X, 'E-D', { weight: 70, dmg: [250, 400], heaDmg: 105, expResDmg: 10, heaCapDmg: 14, range: [1, 1], uses: 4, heaCost: 38 }, 'axe', 0, M('A glowing double-bit. Four swings that peel armor and fill the target with heat.'))
+side('s_staticaxe', 'Static Axe', E, 'E-D', { weight: 70, dmg: [250, 400], eneDmg: 125, eleResDmg: 10, eneCapDmg: 14, range: [1, 1], uses: 4, eneCost: 40, heaCost: 12 }, 'axe', 0, M('A charged double-bit. Four swings that peel insulation and drain the target.'))
+// Shove plates: push 5 where Wrecking Maul pushes 3, for fewer swings and less damage.
+side('s_shoveplate', 'Shove Plate', P, 'L-D', { weight: 58, dmg: [235, 350], phyResDmg: 10, push: 5, range: [1, 1], uses: 3, eneCost: 25, heaCost: 30 }, 'hammer', 0, M('A ram plate on a hydraulic arm. Three shoves that send the target most of the way across the arena.'))
+side('s_blastplate', 'Blast Plate', X, 'L-D', { weight: 60, dmg: [200, 305], heaDmg: 74, expResDmg: 8, push: 5, range: [1, 1], uses: 3, eneCost: 13, heaCost: 50 }, 'hammer', 2, M('A shove plate with a charge behind it. Throws the target five tiles and leaves it smoking.'))
+side('s_staticplate', 'Static Plate', E, 'L-D', { weight: 62, dmg: [200, 305], eneDmg: 90, eleResDmg: 8, push: 5, range: [1, 1], uses: 3, eneCost: 50, heaCost: 13 }, 'hammer', 3, M('A shove plate with a coil behind it. Throws the target five tiles and drains it on the way.'))
+// Foils and sabers: the first light melee. Weights of 22 to 32 leave room for guns and armor.
+side('s_duelfoil', 'Duelist Foil', P, 'R-D', { weight: 22, dmg: [175, 265], range: [1, 1], eneCost: 10, heaCost: 24 }, 'sword', 0, M('A thin blade with no reach and almost no weight. Fits in the last slot of a gunner.'))
+side('s_emberfoil', 'Ember Foil', X, 'R-D', { weight: 24, dmg: [145, 230], heaDmg: 56, range: [1, 1], eneCost: 6, heaCost: 34 }, 'sword', 1, M('A light blade heated white along its edge.'))
+side('s_arcfoil', 'Arc Foil', E, 'R-D', { weight: 24, dmg: [145, 230], eneDmg: 66, range: [1, 1], eneCost: 34, heaCost: 8 }, 'sword', 4, M('A light blade strung with a live wire.'))
+side('s_gustsaber', 'Gale Saber', P, 'E-D', { weight: 30, dmg: [185, 280], push: 2, range: [1, 1], eneCost: 14, heaCost: 26 }, 'sword', 2, M('A curved blade whose follow-through shoves the target two tiles.'))
+side('s_cindersaber', 'Cinder Saber', X, 'E-D', { weight: 32, dmg: [160, 245], heaDmg: 62, push: 2, range: [1, 1], eneCost: 8, heaCost: 38 }, 'sword', 1, M('A curved blade that brands and shoves.'))
+side('s_ionsaber', 'Ion Saber', E, 'E-D', { weight: 32, dmg: [160, 245], eneDmg: 70, push: 2, range: [1, 1], eneCost: 40, heaCost: 10 }, 'sword', 3, M('A curved blade that drains and shoves.'))
+// Lookouts: cheap push-1 blasters for the first weeks, with Rare twin-barrel upgrades.
+side('s_lookout', 'Lookout Carbine', P, 'C-L', { weight: 28, dmg: [135, 190], push: 1, range: [1, 3], eneCost: 12, heaCost: 18 }, 'blaster', 0, L('Short barrel, short fuse. Shoves anything that gets close.'))
+side('s_emberlookout', 'Ember Lookout', X, 'C-L', { weight: 28, dmg: [115, 165], heaDmg: 35, push: 1, range: [1, 3], heaCost: 30 }, 'blaster', 1, L('A cheap sentry flare that shoves and singes.'))
+side('s_voltlookout', 'Volt Lookout', E, 'C-L', { weight: 28, dmg: [115, 165], eneDmg: 38, push: 1, range: [1, 3], eneCost: 30 }, 'blaster', 2, L('A cheap sentry coil that shoves and zaps.'))
+side('s_watchguard', 'Twin Watch', P, 'R-D', { weight: 38, dmg: [175, 255], push: 1, range: [1, 3], eneCost: 16, heaCost: 24 }, 'blaster', 0, L('Two barrels where the Lookout has one. The same shove, a bigger bite.'))
+side('s_emberwatch', 'Ember Watch', X, 'R-D', { weight: 38, dmg: [150, 225], heaDmg: 50, push: 1, range: [1, 3], heaCost: 36 }, 'blaster', 1, L('Twin flare barrels with the same shove.'))
+side('s_voltwatch', 'Volt Watch', E, 'R-D', { weight: 38, dmg: [150, 225], eneDmg: 56, push: 1, range: [1, 3], eneCost: 36, heaCost: 8 }, 'blaster', 2, L('Twin coil barrels with the same shove.'))
+// Burst guns and longshots: Disintegrator and Longshot counterparts for the other elements.
+side('s_scorchgun', 'Scorch Gun', X, 'L-D', { weight: 47, dmg: [190, 340], heaDmg: 62, expResDmg: 12, range: [1, 2], uses: 3, backfire: 100, heaCost: 20 }, 'shotgun', 5, L('Packed with slag. Burns the target and a little of its pilot.'))
+side('s_arcburster', 'Arc Burster', E, 'L-D', { weight: 49, dmg: [190, 340], eneDmg: 78, eleResDmg: 12, range: [1, 2], uses: 3, backfire: 100, eneCost: 20 }, 'shotgun', 6, L('Loaded with capacitors. Shocks the target and the hand that fires it.'))
+side('s_embersniper', 'Ember Longshot', X, 'L-D', { weight: 44, dmg: [160, 245], heaDmg: 66, expResDmg: 8, range: [3, 6], uses: 3, heaCost: 40 }, 'sniper', 1, L('Longshot with a thermal round. Three shots, all of them hot.'))
+side('s_voltsniper', 'Volt Longshot', E, 'L-D', { weight: 44, dmg: [160, 245], eneDmg: 78, eleResDmg: 8, range: [3, 6], uses: 3, eneCost: 38, heaCost: 12 }, 'sniper', 2, L('Longshot with a charged round. Three shots, all of them draining.'))
+// Rare upgrades of the Common starters.
+side('s_marksman', 'Marksman Rifle', P, 'R-D', { weight: 34, dmg: [175, 260], phyResDmg: 6, range: [2, 4], eneCost: 22, heaCost: 22 }, 'rifle', 5, L('A better Service Rifle with a longer barrel and a scope.'))
+side('s_ignitor', 'Ignitor', X, 'R-D', { weight: 38, dmg: [145, 215], heaDmg: 56, range: [1, 2], eneCost: 8, heaCost: 34 }, 'flamer', 4, L('A pressurized Torch with a hotter nozzle.'))
+side('s_arcprojector', 'Arc Projector', E, 'R-D', { weight: 38, dmg: [145, 215], eneDmg: 64, range: [1, 3], eneCost: 34, heaCost: 8 }, 'tesla', 5, L('A wider Zapper dish with a stronger discharge.'))
+// Harpoons: the first side weapons that pull. Three shots, three tiles in.
+side('s_harpoon', 'Harpoon Rifle', P, 'E-D', { weight: 44, dmg: [185, 280], pull: 1, range: [3, 6], uses: 3, eneCost: 18, heaCost: 28 }, 'cannon', 3, L('A barbed bolt on a winch cable. Drags the target one tile closer.'))
+side('s_cinderharpoon', 'Cinder Harpoon', X, 'E-D', { weight: 46, dmg: [160, 245], heaDmg: 62, pull: 1, range: [3, 6], uses: 3, heaCost: 44 }, 'cannon', 3, L('A glowing barb on a winch cable. Drags the target in and leaves it hot.'))
+side('s_voltharpoon', 'Volt Harpoon', E, 'E-D', { weight: 46, dmg: [160, 245], eneDmg: 72, pull: 1, range: [3, 6], uses: 3, eneCost: 44, heaCost: 10 }, 'cannon', 4, L('A charged barb on a winch cable. Drags the target in and drains it.'))
+// Mythical-start weapons: premium finds with a defining trick, not boss reward clones.
+side('s_ironwrath', 'Ironwrath', P, 'M-D', { weight: 54, dmg: [275, 395], phyResDmg: 16, push: 1, range: [2, 5], eneCost: 22, heaCost: 52 }, 'railgun', 4, L('A tuned rail cannon. Hits hard, breaks armor and costs plenty of heat.'))
+side('s_helios', 'Helios Lance', X, 'M-D', { weight: 56, dmg: [235, 335], heaDmg: 120, expResDmg: 12, heaCapDmg: 18, range: [3, 6], eneCost: 24, heaCost: 58 }, 'laser', 5, L('A solar lance with a long reach. Wrecks both hull and heat reserves.'))
+side('s_zenith', 'Zenith Coil', E, 'M-D', { weight: 56, dmg: [235, 335], eneDmg: 135, eleResDmg: 12, eneCapDmg: 18, range: [3, 6], eneCost: 64, heaCost: 22 }, 'tesla', 6, L('A storm coil with a long reach. Wrecks both hull and battery reserves.'))
+
+// Top weapons: breakers. One shot at a flat 3-4 tiles that shreds a resistance; no backfire,
+// unlike the side-slot dissolvers, but four times heavier.
+top('tp_pressbreaker', 'Press Breaker', P, 'E-D', { weight: 42, dmg: [165, 245], phyResDmg: 45, range: [3, 4], uses: 1, eneCost: 20, heaCost: 20 }, 'mortar', 0, L('A hydraulic press shot from a tripod. One strike that folds armor.'))
+top('tp_slagbreaker', 'Slag Breaker', X, 'E-D', { weight: 42, dmg: [145, 220], heaDmg: 50, expResDmg: 45, range: [3, 4], uses: 1, heaCost: 36 }, 'mortar', 2, L('A tripod-mounted slag round. One strike that melts blast plating.'))
+top('tp_staticbreaker', 'Static Breaker', E, 'E-D', { weight: 42, dmg: [145, 220], eneDmg: 60, eleResDmg: 45, range: [3, 4], uses: 1, eneCost: 36, heaCost: 8 }, 'mortar', 3, L('A tripod-mounted capacitor round. One strike that shorts insulation.'))
+// Skewers: a mid-range rail with a shove, between Chain Repeater and Frenzy Rail.
+top('tp_skewer', 'Rail Skewer', P, 'L-D', { weight: 52, dmg: [195, 295], phyResDmg: 10, push: 1, range: [3, 5], eneCost: 28, heaCost: 30 }, 'railgun', 0, L('A needle slug that pins the target and shoves it back a tile.'))
+top('tp_cinderskewer', 'Cinder Skewer', X, 'L-D', { weight: 52, dmg: [170, 255], heaDmg: 64, expResDmg: 8, push: 1, range: [3, 5], eneCost: 12, heaCost: 52 }, 'railgun', 1, L('A superheated needle that pins, shoves and burns.'))
+top('tp_voltskewer', 'Volt Skewer', E, 'L-D', { weight: 52, dmg: [170, 255], eneDmg: 76, eleResDmg: 8, push: 1, range: [3, 5], eneCost: 52, heaCost: 12 }, 'railgun', 2, L('A charged needle that pins, shoves and drains.'))
+// Tethers: pull 1 at range 2-4 without Crimson Hail's two-use limit.
+top('tp_tether', 'Tether Cannon', P, 'E-D', { weight: 58, dmg: [180, 270], pull: 1, range: [2, 4], eneCost: 22, heaCost: 30 }, 'orb', 0, L('A weighted orb on a chain. Drags the target a tile closer with every shot.'))
+top('tp_cindertether', 'Cinder Tether', X, 'E-D', { weight: 60, dmg: [155, 235], heaDmg: 60, expResDmg: 8, pull: 1, range: [2, 4], eneCost: 12, heaCost: 52 }, 'orb', 1, L('A glowing orb on a chain. Drags and brands.'))
+top('tp_volttether', 'Volt Tether', E, 'E-D', { weight: 60, dmg: [155, 235], eneDmg: 72, eleResDmg: 8, pull: 1, range: [2, 4], eneCost: 50, heaCost: 12 }, 'orb', 2, L('A charged orb on a chain. Drags and drains.'))
+top('tp_gravelhail', 'Gravel Hail', P, 'L-D', { weight: 62, dmg: [245, 380], phyResDmg: 14, pull: 2, range: [2, 4], uses: 2, eneCost: 30, heaCost: 60 }, 'mortar', 3, L('The Physical counterpart of Crimson Hail and Blue Squall. Two shells that drag the target in.'))
+// Kite lances: back off while shooting. Needs jumping legs.
+top('tp_kitelance', 'Kite Lance', P, 'L-D', { weight: 40, dmg: [280, 410], phyResDmg: 6, retreat: 2, range: [4, 8], uses: 2, eneCost: 24, heaCost: 40 }, 'railgun', 3, L('Fires from the far side of the field, then hops two tiles away.'))
+top('tp_kiteember', 'Kite Ember', X, 'L-D', { weight: 42, dmg: [240, 360], heaDmg: 90, expResDmg: 6, retreat: 2, range: [4, 8], uses: 2, eneCost: 10, heaCost: 66 }, 'railgun', 3, L('Fires a thermal bolt, then hops two tiles away.'))
+top('tp_kitebolt', 'Kite Bolt', E, 'L-D', { weight: 42, dmg: [240, 360], eneDmg: 105, eleResDmg: 6, retreat: 2, range: [4, 8], uses: 2, eneCost: 66, heaCost: 12 }, 'railgun', 3, L('Fires a charged bolt, then hops two tiles away.'))
+// Thumpers: push 2 with recoil 2, a heavier Ram that throws the shooter back too.
+top('tp_thumper', 'Thumper', P, 'E-D', { weight: 54, dmg: [225, 350], push: 2, recoil: 2, range: [3, 6], uses: 3, eneCost: 24, heaCost: 34 }, 'artillery', 1, L('Throws the target two tiles and the gunner two tiles the other way.'))
+top('tp_cinderthumper', 'Cinder Thumper', X, 'E-D', { weight: 54, dmg: [190, 300], heaDmg: 72, expResDmg: 6, push: 2, recoil: 2, range: [3, 6], uses: 3, eneCost: 12, heaCost: 58 }, 'artillery', 2, L('A thermal Thumper. Everyone gets pushed.'))
+top('tp_voltthumper', 'Volt Thumper', E, 'E-D', { weight: 56, dmg: [190, 300], eneDmg: 88, eleResDmg: 6, push: 2, recoil: 2, range: [3, 6], uses: 3, eneCost: 58, heaCost: 12 }, 'artillery', 3, L('A charged Thumper. Everyone gets pushed.'))
+// Spotters: one long shot at 7-8, lighter and earlier than the Canopy scopes.
+top('tp_spotter', 'Iron Spotter', P, 'E-D', { weight: 26, dmg: [470, 740], range: [7, 8], uses: 1, eneCost: 22, heaCost: 22 }, 'scope', 3, L('A spotting scope with a slug behind it. One shot at the far end of the field.'))
+top('tp_emberspotter', 'Ember Spotter', X, 'E-D', { weight: 26, dmg: [380, 610], heaDmg: 160, expResDmg: 10, range: [7, 8], uses: 1, eneCost: 20, heaCost: 110 }, 'scope', 3, L('A spotting scope with a thermal slug.'))
+top('tp_voltspotter', 'Volt Spotter', E, 'E-D', { weight: 26, dmg: [380, 610], eneDmg: 210, eleResDmg: 8, range: [7, 8], uses: 1, eneCost: 110, heaCost: 24 }, 'scope', 3, L('A spotting scope with a charged slug.'))
+// Mythical-start tops: three-shot long guns, the first non-boss premium artillery.
+top('tp_meteorrail', 'Meteor Rail', P, 'M-D', { weight: 48, dmg: [380, 520], phyResDmg: 14, range: [5, 8], uses: 3, eneCost: 34, heaCost: 40 }, 'railgun', 4, L('Three shots from a rail as long as the mech. Reliable at any distance past four.'))
+top('tp_sunfallbattery', 'Sunfall Battery', X, 'M-D', { weight: 58, dmg: [300, 430], heaDmg: 130, expResDmg: 12, heaCapDmg: 22, range: [4, 8], uses: 3, eneCost: 20, heaCost: 90 }, 'artillery', 3, L('Three rounds of falling fire. Armor, hit points and heat capacity all take damage.'))
+top('tp_tempestarray', 'Tempest Array', E, 'M-D', { weight: 58, dmg: [300, 430], eneDmg: 140, eleResDmg: 12, eneCapDmg: 22, range: [4, 8], uses: 3, eneCost: 90, heaCost: 20 }, 'orb', 3, L('Three storm cells fired from a gimbaled array. Armor, hit points and battery all take damage.'))
+
+// Drones. Pointers have no cost at all; Skimmers shoot from two or three tiles away.
+drone('d_pointer', 'Slug Pointer', P, 'C-L', { weight: 18, dmg: [85, 120] }, 0, 'A bare-bones gun drone. Light, free to run and a little weak.')
+drone('d_flarepointer', 'Flare Pointer', X, 'C-L', { weight: 22, dmg: [75, 110], heaDmg: 20 }, 2, 'A sighting drone with a heated beam. Never touches the heat gauge.')
+drone('d_arcpointer', 'Arc Pointer', E, 'C-L', { weight: 22, dmg: [75, 110], eneDmg: 22 }, 2, 'A sighting drone with a live beam. Never touches the energy gauge.')
+drone('d_triplepointer', 'Triple Pointer', P, 'R-D', { weight: 26, dmg: [112, 160] }, 0, 'Three barrels on one frame. Free to run and a good partner for any energy build.')
+drone('d_tripleflare', 'Triple Flare', X, 'R-D', { weight: 28, dmg: [95, 138], heaDmg: 30 }, 2, 'Three heated beams on one frame. Free to run.')
+drone('d_triplearc', 'Triple Arc', E, 'R-D', { weight: 28, dmg: [95, 138], eneDmg: 34 }, 2, 'Three live beams on one frame. Free to run.')
+drone('d_bruiser', 'Bruiser Drone', P, 'E-D', { weight: 46, dmg: [175, 235], phyResDmg: 5, uses: 3, eneCost: 25, heaCost: 25 }, 1, 'An armored drone with three heavy swings before it burns out.')
+drone('d_shover', 'Shover', P, 'L-D', { weight: 42, dmg: [130, 200], push: 2, eneCost: 18, heaCost: 18 }, 3, 'A plow-nosed drone that shoves the target two tiles every turn.')
+drone('d_cinderhook', 'Cinder Hook', X, 'L-D', { weight: 50, dmg: [140, 215], heaDmg: 56, pull: 1, heaCost: 34 }, 3, 'A hot grapple that drags the target a tile closer every turn.')
+drone('d_voltgrapple', 'Volt Grapple', E, 'L-D', { weight: 50, dmg: [140, 215], eneDmg: 64, pull: 1, eneCost: 36 }, 3, 'A charged grapple that drags the target a tile closer every turn.')
+drone('d_skimmer', 'Skimmer', P, 'R-E', { weight: 34, dmg: [135, 195], range: [2, 3], eneCost: 14, heaCost: 14 }, 1, 'A low-flying drone that opens fire from two or three tiles.')
+drone('d_emberskimmer', 'Ember Skimmer', X, 'R-E', { weight: 34, dmg: [112, 168], heaDmg: 40, range: [2, 3], heaCost: 28 }, 1, 'A low-flying drone with a flare gun.')
+drone('d_voltskimmer', 'Volt Skimmer', E, 'R-E', { weight: 34, dmg: [112, 168], eneDmg: 44, range: [2, 3], eneCost: 28 }, 1, 'A low-flying drone with a coil gun.')
+drone('d_ironoverseer', 'Iron Overseer', P, 'M-D', { weight: 50, dmg: [225, 365], phyResDmg: 10, range: [2, 5], eneCost: 30, heaCost: 30 }, 1, 'A Mythical watcher that shoots over the whole mid-field.')
+drone('d_sunoverseer', 'Sun Overseer', X, 'M-D', { weight: 50, dmg: [190, 310], heaDmg: 85, expResDmg: 8, range: [2, 5], heaCost: 64 }, 1, 'A Mythical watcher with a solar lens.')
+drone('d_stormoverseer', 'Storm Overseer', E, 'M-D', { weight: 50, dmg: [190, 310], eneDmg: 95, eleResDmg: 8, range: [2, 5], eneCost: 64 }, 1, 'A Mythical watcher wrapped in a storm cell.')
+
+// Specials. Common X and E variants of the P chargers, blinks and claws, plus the first
+// two-use charger and grapple, two-use gates for the other elements, and Mythical chains.
+special('CHARGE_ENGINE', 'c_cinderram', 'Cinder Ram', X, 'C-E', { weight: 22, dmg: [85, 125], heaDmg: 22, push: 1, range: [2, 9], uses: 1, heaCost: 20 }, 'charge', 3, 'A scorching Ram Booster.')
+special('CHARGE_ENGINE', 'c_sparkram', 'Spark Ram', E, 'C-E', { weight: 22, dmg: [85, 125], eneDmg: 26, push: 1, range: [2, 9], uses: 1, eneCost: 20 }, 'charge', 3, 'A shocking Ram Booster.')
+special('CHARGE_ENGINE', 'c_twintail', 'Twin Tail', P, 'E-D', { weight: 24, dmg: [100, 150], push: 1, range: [2, 9], uses: 2 }, 'charge', 1, 'Two weaker dashes where Rocket Charger has one strong one.')
+special('CHARGE_ENGINE', 'c_emberrocket', 'Ember Rocket', X, 'E-D', { weight: 20, dmg: [140, 185], heaDmg: 40, push: 1, range: [2, 9], uses: 1, heaCost: 24 }, 'charge', 0, 'A Rocket Charger with a flaming tail.')
+special('CHARGE_ENGINE', 'c_staticrocket', 'Static Rocket', E, 'E-D', { weight: 20, dmg: [140, 185], eneDmg: 45, push: 1, range: [2, 9], uses: 1, eneCost: 24 }, 'charge', 0, 'A Rocket Charger with a draining tail.')
+special('TELEPORTER', 'tele_heatblink', 'Heat Blink', X, 'C-E', { weight: 15, dmg: [55, 85], heaDmg: 20, uses: 1, heaCost: 20 }, 'teleporter', 3, 'A Blink Drive that runs on heat instead of energy.')
+special('TELEPORTER', 'tele_kineticblink', 'Kinetic Blink', P, 'C-E', { weight: 15, dmg: [60, 90], uses: 1, heaCost: 20 }, 'teleporter', 2, 'A Blink Drive that runs on heat and hits like a shoulder.')
+special('TELEPORTER', 'tele_arcgate', 'Arc Gate', E, 'E-D', { weight: 20, dmg: [70, 100], uses: 2, eneCost: 26 }, 'teleporter', 1, 'Two jumps, and a hit if you land beside the target.')
+special('TELEPORTER', 'tele_cindergate', 'Cinder Gate', X, 'L-D', { weight: 24, dmg: [80, 115], heaDmg: 30, uses: 2, heaCost: 38 }, 'teleporter', 3, 'Two jumps that leave a smoking landing.')
+special('GRAPPLING_HOOK', 'h_emberclaw', 'Ember Claw', X, 'C-E', { weight: 18, dmg: [85, 125], heaDmg: 22, range: [2, 9], uses: 1, heaCost: 20 }, 'hook', 3, 'A Grapple Claw with a heated tip.')
+special('GRAPPLING_HOOK', 'h_sparkclaw', 'Spark Claw', E, 'C-E', { weight: 18, dmg: [85, 125], eneDmg: 26, range: [2, 9], uses: 1, eneCost: 20 }, 'hook', 3, 'A Grapple Claw with a live tip.')
+special('GRAPPLING_HOOK', 'h_twingrapple', 'Twin Grapple', P, 'E-D', { weight: 20, dmg: [110, 150], range: [2, 9], uses: 2 }, 'hook', 3, 'Two pulls where Platinum Grapple has one stronger one.')
+special('GRAPPLING_HOOK', 'h_titanchain', 'Titan Chain', P, 'M-D', { weight: 14, dmg: [190, 250], range: [2, 9], uses: 1 }, 'hook', 0, 'The hardest-hitting grapple in the game, on a featherweight chain.')
+
+// Modules. Guard Plates fill the Rare gap in the resistance ladder; Bulwarks add hit points;
+// Dual Guards cover two resistance types at once (and so use up two of the three slots' worth).
+mod('m_guardplate', 'Guard Plate', P, 'R-L', { weight: 30, phyRes: 34 }, 1, 'A thicker Physical Protector for the Rare tier.')
+mod('m_emberplate', 'Ember Plate', X, 'R-L', { weight: 30, expRes: 34 }, 1, 'A thicker Heat Protector for the Rare tier.')
+mod('m_arcplate', 'Arc Plate', E, 'R-L', { weight: 30, eleRes: 34 }, 1, 'A thicker Energy Protector for the Rare tier.')
+mod('m_bulwarkplate', 'Bulwark Plate', P, 'E-D', { weight: 34, phyRes: 36, health: 90 }, 5, 'Armor and a little extra hit points on one plate.')
+mod('m_slagbulwark', 'Slag Bulwark', X, 'E-D', { weight: 34, expRes: 36, health: 90 }, 5, 'Blast armor and a little extra hit points on one plate.')
+mod('m_stormbulwark', 'Storm Bulwark', E, 'E-D', { weight: 34, eleRes: 36, health: 90 }, 5, 'Insulation and a little extra hit points on one plate.')
+mod('m_siegeguard', 'Siege Guard', K, 'E-D', { weight: 38, phyRes: 34, expRes: 34 }, 1, 'Covers kinetic and explosive fire. Leaves electric open.')
+mod('m_stormguard', 'Storm Guard', K, 'E-D', { weight: 38, phyRes: 34, eleRes: 34 }, 1, 'Covers kinetic and electric fire. Leaves explosive open.')
+mod('m_fluxguard', 'Flux Guard', K, 'E-D', { weight: 38, expRes: 34, eleRes: 34 }, 1, 'Covers explosive and electric fire. Leaves kinetic open.')
+mod('m_alloyplating', 'Alloy Plating', P, 'R-L', { weight: 36, health: 190 }, 0, 'Between Iron and Steel: a Rare plate for pilots who cannot afford Steel yet.')
+mod('m_mythrilplating', 'Mythril Plating', P, 'M-D', { weight: 38, health: 390 }, 0, 'Mythical plating. More hit points than Titanium, for the same weight class.')
+mod('m_miniheat', 'Mini Heat Engine', X, 'R-L', { weight: 19, heaCap: 55, heaCol: 26 }, 2, 'A small heat engine for the Rare tier.')
+mod('m_minienergy', 'Mini Energy Engine', E, 'R-L', { weight: 19, eneCap: 55, eneReg: 26 }, 3, 'A small energy engine for the Rare tier.')
+mod('m_turboheat', 'Turbo Heat Engine', X, 'L-D', { weight: 30, heaCap: 120, heaCol: 56 }, 2, 'Heat Engine with a bigger turbine. Legendary start, heavier.')
+mod('m_turboenergy', 'Turbo Energy Engine', E, 'L-D', { weight: 30, eneCap: 120, eneReg: 56 }, 3, 'Energy Engine with a bigger turbine. Legendary start, heavier.')
+mod('m_fusioncore', 'Fusion Core', K, 'M-D', { weight: 44, eneCap: 105, eneReg: 55, heaCap: 100, heaCol: 55 }, 4, 'A Mythical core that feeds both gauges: more recovery than a Quad Core Booster and a little more capacity.')
+
+// Hand-drawn routines (src/art/armory.ts). Each serves one family; the palette recolors it per element.
+skin('axe-heavy', 's_bruteaxe', 's_cinderaxe', 's_staticaxe')
+skin('deflector-plate', 's_shoveplate', 's_blastplate', 's_staticplate')
+skin('foil-blade', 's_duelfoil', 's_emberfoil', 's_arcfoil')
+skin('saber-curved', 's_gustsaber', 's_cindersaber', 's_ionsaber')
+skin('lookout-blaster', 's_lookout', 's_emberlookout', 's_voltlookout')
+skin('lookout-twin', 's_watchguard', 's_emberwatch', 's_voltwatch')
+skin('harpoon-gun', 's_harpoon', 's_cinderharpoon', 's_voltharpoon')
+skin('breaker-tripod', 'tp_pressbreaker', 'tp_slagbreaker', 'tp_staticbreaker')
+skin('skewer-lance', 'tp_skewer', 'tp_cinderskewer', 'tp_voltskewer')
+skin('tether-orb', 'tp_tether', 'tp_cindertether', 'tp_volttether')
+skin('kite-lance', 'tp_kitelance', 'tp_kiteember', 'tp_kitebolt')
+skin('thumper', 'tp_thumper', 'tp_cinderthumper', 'tp_voltthumper')
+skin('spotter-scope', 'tp_spotter', 'tp_emberspotter', 'tp_voltspotter')
+skin('meteor-rail', 'tp_meteorrail')
+skin('sunfall-battery', 'tp_sunfallbattery')
+skin('tempest-array', 'tp_tempestarray')
+skin('pointer', 'd_pointer', 'd_flarepointer', 'd_arcpointer')
+skin('triple-pointer', 'd_triplepointer', 'd_tripleflare', 'd_triplearc')
+skin('skimmer', 'd_skimmer', 'd_emberskimmer', 'd_voltskimmer')
+skin('overseer', 'd_ironoverseer', 'd_sunoverseer', 'd_stormoverseer')
+skin('bruiser', 'd_bruiser')
+skin('shover', 'd_shover')
+skin('hook-drone', 'd_cinderhook', 'd_voltgrapple')
+skin('hopper-legs', 'l_longhoppers', 'l_cinderleapers', 'l_voltleapers')
+skin('marcher-legs', 'l_routemarchers', 'l_embermarchers', 'l_staticmarchers')
+skin('crawler-legs', 'l_hullcrawlers', 'l_slagcrawlers', 'l_arccrawlers')
+skin('mythic-lance', 's_ironwrath', 's_helios', 's_zenith')
+skin('charger-twin', 'c_twintail')
+skin('charger-rocket', 'c_emberrocket', 'c_staticrocket')
+skin('gate-ring', 'tele_arcgate', 'tele_cindergate')
+skin('twin-hook', 'h_twingrapple')
+skin('titan-chain', 'h_titanchain')
+skin('guard-plate', 'm_guardplate', 'm_emberplate', 'm_arcplate')
+skin('dual-guard-px', 'm_siegeguard')
+skin('dual-guard-pe', 'm_stormguard')
+skin('dual-guard-xe', 'm_fluxguard')
+skin('alloy-plate', 'm_alloyplating')
+skin('mythril-plate', 'm_mythrilplating')
+skin('engine-mini-heat', 'm_miniheat')
+skin('engine-mini-energy', 'm_minienergy')
+skin('engine-turbo-heat', 'm_turboheat')
+skin('engine-turbo-energy', 'm_turboenergy')
+skin('fusion-core', 'm_fusioncore')
 
 export const ITEMS: readonly ItemDef[] = items
 export const ITEM_MAP: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]))
