@@ -127,6 +127,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'big_hit', name: 'Heavy Hitter', text: 'Deal 1,000 damage in one hit', tokens: 60, progress: (s) => [Math.min(1000, s.stats.biggestHit), 1000] },
   { id: 'dmg_100k', name: 'Demolition', text: 'Deal 100,000 total damage', tokens: 100, progress: (s) => [Math.min(100000, s.stats.damageDealt), 100000] },
   { id: 'shutdowns_10', name: 'Meltdown', text: 'Force 10 enemy shutdowns', tokens: 60, progress: (s) => [Math.min(10, s.stats.shutdownsCaused), 10] },
+  { id: 'run_6', name: 'Heap Climber', text: 'Beat the Scrap Warden in a Scrapyard Run', tokens: 60, progress: (s) => [Math.min(6, s.runRecords.bestFloor), 6] },
+  { id: 'run_win', name: 'King of the Heap', text: 'Clear all 12 floors of a Scrapyard Run', tokens: 200, progress: (s) => [Math.min(1, s.runRecords.wins), 1] },
   { id: 'level_10', name: 'Rookie No More', text: 'Reach pilot level 10', tokens: 40, progress: (s) => [Math.min(10, s.pilot.level), 10] },
   { id: 'level_30', name: 'Ace', text: 'Reach pilot level 30', tokens: 150, progress: (s) => [Math.min(30, s.pilot.level), 30] },
 ]

@@ -99,6 +99,17 @@ export function Home() {
             </span>
           </p>
         </button>
+        <button class="mode run-mode" style={{ '--mc': '#ff9a4a', backgroundImage: `url(${sceneImage('scrapyard', 600)})` }} onClick={() => go('run')}>
+          <span class="label">Roguelike · New</span>
+          <h3>Scrapyard Run</h3>
+          <p>
+            {s.run && !s.run.over
+              ? `Run in progress: floor ${s.run.floor + 1}/12, hull ${Math.round(s.run.hp * 100)}%`
+              : s.runRecords.runs
+                ? `Draft a mech, stack Overclocks, climb 12 floors. Best: floor ${s.runRecords.bestFloor}`
+                : 'Draft a mech, stack Overclocks, climb 12 floors of the heap.'}
+          </p>
+        </button>
         <button class="mode" style={{ '--mc': league.color, backgroundImage: `url(${sceneImage('arena', 600)})` }} onClick={() => go('arena')}>
           <span class="label">Ranked PvP</span>
           <h3>Arena</h3>

@@ -3,9 +3,9 @@ import type { BattleController, EndInfo } from '../battle/controller'
 import type { Style } from '../game/playstyles'
 import type { RewardSummary } from '../game/store'
 
-export type Route = 'home' | 'hangar' | 'factory' | 'shop' | 'campaign' | 'arena' | 'workshop' | 'versus' | 'quests'
+export type Route = 'home' | 'hangar' | 'factory' | 'shop' | 'campaign' | 'arena' | 'workshop' | 'versus' | 'quests' | 'run'
 
-const ROUTES: Route[] = ['home', 'hangar', 'factory', 'shop', 'campaign', 'arena', 'workshop', 'versus', 'quests']
+const ROUTES: Route[] = ['home', 'hangar', 'factory', 'shop', 'campaign', 'arena', 'workshop', 'versus', 'quests', 'run']
 
 function parseHash(): Route | null {
   const h = (typeof location !== 'undefined' ? location.hash.slice(1) : '') as Route

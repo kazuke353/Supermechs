@@ -8,6 +8,7 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 
 **Battles**
 - 10-tile arena and 2 actions per turn (the starter gets 1 on turn one).
+- Optional Overclock perks (Scrapyard Run only) hook into the engine and stay deterministic.
 - Energy, heat and forced cooldowns. Energy drain can break an empty mech for bonus damage.
 - Physical, explosive and electric resistances.
 - Walking, jumping and teleporting.
@@ -43,6 +44,15 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 - One-time rank-up rewards.
 - Arena buffs apply: more HP, and more damage, energy, heat and resistances.
 
+**Scrapyard Run** (roguelike)
+- Climb 12 floors of the junk heap in a fresh mech drafted just for the run. Your hangar is untouched.
+- Pick a starter frame and a starting Overclock, then salvage a part after every win. Parts scale with the floor: Epic, then Legendary, then Mythical.
+- Hull damage carries between fights. Each win patches 30%, and repair bays and caches patch more.
+- Each floor offers a choice of routes: scrap brawls, elites, repair bays, scrap caches (spend run scrap on parts, Overclocks or repairs) and anomalies (gambles and trades).
+- Bosses wait on floors 6 and 12. A refresh in the middle of a fight counts as a loss.
+- **Overclocks** are twelve engine-level perks that bend the battle rules: critical hits, life steal, a once-per-battle bulkhead, ambush strikes, Redline and Executioner damage, reflective spikes, a Tesla aura that shocks adjacent enemies, kinetic and cryo sustain, and hull and reactor boosts. Elites and bosses field them too, and the battle HUD shows each fighter's Overclocks.
+- Gold, tokens and XP scale with floors cleared. A full clear also lets you keep one part from your run mech at Legendary.
+
 **Workshop**
 - Every part unlocked and maxed, so you can theorycraft freely.
 - Test builds against bots of any tier and difficulty.
@@ -57,7 +67,7 @@ A free, fan-made tribute to the turn-based mech battler **SuperMechs**. It has t
 
 **Free loot**
 - Supply crates, Fortune boxes and element boxes, all with published odds and pity timers.
-- A free Fortune Box every day, a 7-day login calendar, daily quests and 29 achievements.
+- A free Fortune Box every day, a 7-day login calendar, daily quests and 31 achievements.
 
 **Presentation**
 - Illustrated battle backdrops.
@@ -108,7 +118,7 @@ Hover a weapon button to see its range on the floor.
 ```
 src/
   engine/   battle rules, stats, catalog, AI, loadout builder (no DOM)
-  game/     save data, economy, parts depot, tutorial, boxes, campaign, arena ladder, quests, store
+  game/     save data, economy, parts depot, tutorial, boxes, campaign, arena ladder, scrapyard run, quests, store
   art/      procedural part painters and the mech composer
   battle/   battle scene (camera, tweens, particles), backdrops, controller
   audio/    synthesized SFX and music sequencer
