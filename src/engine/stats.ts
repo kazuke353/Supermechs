@@ -1,4 +1,4 @@
-import type { ItemStats, Range, StatKey, Tier } from './types'
+import type { ItemStats, ItemType, Range, StatKey, Tier } from './types'
 
 export interface StatInfo {
   key: StatKey
@@ -72,8 +72,15 @@ const TIER_FACTOR: Record<Tier, [number, number]> = {
   5: [0.97, 1.0],
 }
 
-export function statFactor(tier: Tier, level: number): number {
-  const [lo, hi] = TIER_FACTOR[tier]
+/**
+ * Weapons, drones and modules gain twice as much on the final Mythical-to-Divine
+ * transformation (about 6% instead of 3%); Divine max stays at the catalog values.
+ */
+const BIG_DIVINE_JUMP: Partial<Record<ItemType, true>> = { SIDE_WEAPON: true, TOP_WEAPON: true, DRONE: true, MODULE: true }
+const MYTHICAL_FACTOR_BIG_JUMP: [number, number] = [0.72, 0.94]
+
+export function statFactor(tier: Tier, level: number, type?: ItemType): number {
+  const [lo, hi] = tier === 4 && type && BIG_DIVINE_JUMP[type] ? MYTHICAL_FACTOR_BIG_JUMP : TIER_FACTOR[tier]
   const max = TIER_MAX_LEVEL[tier]
   const t = max <= 1 ? 1 : (Math.min(Math.max(level, 1), max) - 1) / (max - 1)
   return lo + (hi - lo) * t
@@ -86,8 +93,8 @@ function scaleNum(v: number, f: number): number {
   return r === 0 ? Math.sign(v) : r
 }
 
-export function scaleStats(base: ItemStats, tier: Tier, level: number): ItemStats {
-  const f = statFactor(tier, level)
+export function scaleStats(base: ItemStats, tier: Tier, level: number, type?: ItemType): ItemStats {
+  const f = statFactor(tier, level, type)
   const out: ItemStats = {}
   for (const key of Object.keys(base) as StatKey[]) {
     const value = base[key]
