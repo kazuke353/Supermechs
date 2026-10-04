@@ -306,7 +306,7 @@ describe('mech building', () => {
 
   it('costs 15 HP per kg over 1000 and rejects mechs over 1010 kg', () => {
     const base = loadout({ torso: 't_colossus', legs: 'l_anchor' })
-    const heavy = { ...base, ...loadout({ module1: 'm_titanplating', module2: 'm_quadcore', module3: 'm_combostorage', module4: 'm_titanplating', module5: 'm_phyfortress' }) }
+    const heavy = { ...base, ...loadout({ module1: 'm_titanplating', module2: 'm_quadcore', module3: 'm_combostorage' }) }
     const heavyItems = ['s_widowmaker', 's_hellmouth', 's_mastiff', 's_ionhybrid', 'tp_firestorm', 'tp_supreme']
     const slots = ['side1', 'side2', 'side3', 'side4', 'top1', 'top2'] as const
     heavyItems.forEach((id, i) => (heavy[slots[i]] = resolveItem(getItem(id), 5, 50)))
