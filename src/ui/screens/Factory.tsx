@@ -110,7 +110,7 @@ export function Factory() {
   const transformInfo = sel ? canTransform(sel) : null
   const tCost = sel ? transformCost(sel.tier) : null
   const nextTierItem = sel && selDef && sel.tier < selDef.maxTier ? previewTransform(sel) : null
-  const nextTierStats = nextTierItem && selDef ? scaleStats(selDef.stats, nextTierItem.tier, nextTierItem.level) : null
+  const nextTierStats = nextTierItem && selDef ? scaleStats(selDef.stats, nextTierItem.tier, nextTierItem.level, selDef.type) : null
 
   return (
     <>
@@ -284,7 +284,7 @@ export function Factory() {
                 </div>
               ) : (
                 <>
-                  <StatList stats={scaleStats(selDef.stats, sel.tier, sel.level)} />
+                  <StatList stats={scaleStats(selDef.stats, sel.tier, sel.level, selDef.type)} />
                   <div class="row">
                     <button class="btn primary grow" disabled={sel.level >= TIER_MAX_LEVEL[sel.tier]} onClick={() => setFusing(true)}>
                       Fuse
@@ -303,7 +303,7 @@ export function Factory() {
                           Transform to <TierLabel tier={(sel.tier + 1) as Tier} />
                         </h3>
                       </div>
-                      <StatList stats={nextTierStats} compare={scaleStats(selDef.stats, sel.tier, sel.level)} />
+                      <StatList stats={nextTierStats} compare={scaleStats(selDef.stats, sel.tier, sel.level, selDef.type)} />
                       <div class="row" style={{ marginTop: 10, justifyContent: 'space-between' }}>
                         <span class="row">
                           <span class="pill">

@@ -18,7 +18,7 @@ export const OVERLOAD_PENALTY = 15 // HP lost per kg above the weight limit
 export const ARENA_HEALTH_BUFF = 350
 
 export function resolveItem(def: ItemDef, tier: Tier, level: number): ResolvedItem {
-  return { def, tier, level, stats: scaleStats(def.stats, tier, level) }
+  return { def, tier, level, stats: scaleStats(def.stats, tier, level, def.type) }
 }
 
 export interface MechSummary {

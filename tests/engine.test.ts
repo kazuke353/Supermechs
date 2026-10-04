@@ -304,6 +304,19 @@ describe('mech building', () => {
     expect(divineMax.phyDmg![1] / mythicMax.phyDmg![1]).toBeCloseTo(236 / 229, 1)
   })
 
+  it('doubles the Mythical-to-Divine gain for weapons and modules only', () => {
+    const gain = (id: string) => {
+      const def = getItem(id)
+      const m = scaleStats(def.stats, 4, 50, def.type)
+      const d = scaleStats(def.stats, 5, 50, def.type)
+      expect(d).toEqual(def.stats)
+      return d.phyDmg ? d.phyDmg[1] / m.phyDmg![1] : d.health! / m.health!
+    }
+    expect(gain('s_duskfall')).toBeGreaterThan(1.055)
+    expect(gain('s_duskfall')).toBeLessThan(1.07)
+    expect(gain('t_colossus')).toBeLessThan(1.04)
+  })
+
   it('costs 15 HP per kg over 1000 and rejects mechs over 1010 kg', () => {
     const base = loadout({ torso: 't_colossus', legs: 'l_anchor' })
     const heavy = { ...base, ...loadout({ module1: 'm_titanplating', module2: 'm_quadcore', module3: 'm_combostorage' }) }
