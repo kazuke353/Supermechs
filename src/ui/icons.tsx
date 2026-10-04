@@ -92,6 +92,20 @@ export const Token = (p: P) => (
   </svg>
 )
 
+/** Scrapyard Run currency: a salvaged gear coin. */
+export const Scrap = (p: P) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
+    <path
+      d="M10.3 2h3.4l.6 2.6 2.1.9 2.3-1.4 2.4 2.4-1.4 2.3.9 2.1 2.6.6v3.4l-2.6.6-.9 2.1 1.4 2.3-2.4 2.4-2.3-1.4-2.1.9-.6 2.6h-3.4l-.6-2.6-2.1-.9-2.3 1.4-2.4-2.4 1.4-2.3-.9-2.1L2 13.7v-3.4l2.6-.6.9-2.1-1.4-2.3 2.4-2.4 2.3 1.4 2.1-.9z"
+      fill="#b9c2cc"
+      stroke="#4a525c"
+      stroke-width="1.3"
+      stroke-linejoin="round"
+    />
+    <circle cx="12" cy="12" r="3.6" fill="#5c6570" stroke="#2c3238" stroke-width="1.2" />
+  </svg>
+)
+
 export const Kit = (p: P) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
     <rect x="3" y="6" width="18" height="14" rx="3" fill="#53d88b" stroke="#1a6b3c" stroke-width="1.5" />

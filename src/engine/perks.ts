@@ -28,23 +28,21 @@ export interface PerkDef {
   text: string
   /** Accent color for chips and in-battle callouts. */
   color: string
-  /** Short glyph drawn on the perk badge. */
-  glyph: string
 }
 
 export const PERKS: Record<PerkId, PerkDef> = {
-  crit: { id: 'crit', name: 'Targeting Chip', text: 'Hits have a 20% chance to crit for ×1.6 damage.', color: '#ffd23f', glyph: '✦' },
-  leech: { id: 'leech', name: 'Leech Coils', text: 'Heal 20% of the damage you deal.', color: '#5cff9d', glyph: '♥' },
-  bulkhead: { id: 'bulkhead', name: 'Emergency Bulkhead', text: 'Once per battle, survive a fatal blow with 1 HP.', color: '#b8c4d4', glyph: '▣' },
-  ambush: { id: 'ambush', name: 'Ambush Protocol', text: 'Your first damaging hit each battle deals double.', color: '#ff7ad9', glyph: '⚡' },
-  redline: { id: 'redline', name: 'Redline', text: 'Deal +35% damage while below half HP.', color: '#ff4a5f', glyph: '!' },
-  executioner: { id: 'executioner', name: 'Executioner', text: 'Deal +50% damage to targets below 30% HP.', color: '#c77dff', glyph: '✕' },
-  spikes: { id: 'spikes', name: 'Spiked Plating', text: 'Reflect 20% of damage taken back at the attacker.', color: '#ff9a4a', glyph: '✷' },
-  tesla: { id: 'tesla', name: 'Tesla Aura', text: 'An enemy that ends its turn next to you takes 6% of its max HP.', color: '#6ff0ff', glyph: 'ϟ' },
-  dynamo: { id: 'dynamo', name: 'Kinetic Dynamo', text: 'Moving restores half your energy regen and vents half your cooling.', color: '#7fd1ff', glyph: '↻' },
-  cryo: { id: 'cryo', name: 'Cryo Loop', text: 'Cooldown vents 60% more heat and restores 15% energy.', color: '#9fe8ff', glyph: '❄' },
-  hull: { id: 'hull', name: 'Reinforced Hull', text: '+20% max HP.', color: '#ffe27a', glyph: '+' },
-  reactor: { id: 'reactor', name: 'Overclocked Reactor', text: '+30% energy capacity, regen, heat capacity and cooling.', color: '#ffb627', glyph: '◉' },
+  crit: { id: 'crit', name: 'Targeting Chip', text: 'Hits have a 20% chance to crit for ×1.6 damage.', color: '#ffd23f' },
+  leech: { id: 'leech', name: 'Leech Coils', text: 'Heal 20% of the damage you deal.', color: '#5cff9d' },
+  bulkhead: { id: 'bulkhead', name: 'Emergency Bulkhead', text: 'Once per battle, survive a fatal blow with 1 HP.', color: '#b8c4d4' },
+  ambush: { id: 'ambush', name: 'Ambush Protocol', text: 'Your first damaging hit each battle deals double.', color: '#ff7ad9' },
+  redline: { id: 'redline', name: 'Redline', text: 'Deal +35% damage while below half HP.', color: '#ff4a5f' },
+  executioner: { id: 'executioner', name: 'Executioner', text: 'Deal +50% damage to targets below 30% HP.', color: '#c77dff' },
+  spikes: { id: 'spikes', name: 'Spiked Plating', text: 'Reflect 20% of damage taken back at the attacker.', color: '#ff9a4a' },
+  tesla: { id: 'tesla', name: 'Tesla Aura', text: 'An enemy that ends its turn next to you takes 6% of its max HP.', color: '#6ff0ff' },
+  dynamo: { id: 'dynamo', name: 'Kinetic Dynamo', text: 'Moving restores half your energy regen and vents half your cooling.', color: '#7fd1ff' },
+  cryo: { id: 'cryo', name: 'Cryo Loop', text: 'Cooldown vents 60% more heat and restores 15% energy.', color: '#9fe8ff' },
+  hull: { id: 'hull', name: 'Reinforced Hull', text: '+20% max HP.', color: '#ffe27a' },
+  reactor: { id: 'reactor', name: 'Overclocked Reactor', text: '+30% energy capacity, regen, heat capacity and cooling.', color: '#ffb627' },
 }
 
 export const PERK_IDS = Object.keys(PERKS) as PerkId[]

@@ -3,11 +3,11 @@ import { audio } from '../../audio/audio'
 import type { VisualLoadout } from '../../art/mech'
 import { getItem } from '../../engine/catalog'
 import { powerRating, summarize } from '../../engine/mech'
-import { PERK_IDS, PERKS, type PerkId } from '../../engine/perks'
+import { PERK_IDS } from '../../engine/perks'
 import { randomSeed } from '../../engine/rng'
 import { resolveAt } from '../../engine/builder'
-import { TIER_NAMES } from '../../engine/stats'
-import { SLOT_NAMES, type Loadout, type SlotName } from '../../engine/types'
+import { HULL_MULT } from '../../engine/perks'
+import { SLOT_NAMES, type Element, type Loadout, type SlotName, type Tier } from '../../engine/types'
 import {
   ANOMALIES,
   anomalyChoices,
@@ -20,6 +20,7 @@ import {
   runEnemy,
   runLoadout,
   runPayout,
+  sceneFor,
   slotsFor,
   starterKits,
   type NodeKind,
@@ -42,11 +43,12 @@ import {
   startRun,
 } from '../../game/store'
 import { sceneImage } from '../../battle/sceneImage'
-import { Gold, IconClose, Token, Xp } from '../icons'
-import { GearStrip, ItemTile, StatList, TYPE_LABEL } from '../components/items'
-import { SLOT_LABEL } from '../components/loadout'
+import { Gold, IconClose, IconSwords, IconWrench, Scrap, Token, Xp } from '../icons'
+import { Gauge } from '../components/Gauge'
+import { ElementLabel, GearStrip, ItemTile, StatList, TierLabel, TYPE_LABEL } from '../components/items'
+import { MechStats, SLOT_LABEL } from '../components/loadout'
 import { MechView } from '../components/MechView'
-import { PerkBadge } from '../components/perks'
+import { PerkBadge, PerkCard } from '../components/perks'
 import { startRunBattle } from '../launch'
 import { toast } from '../state'
 
@@ -56,29 +58,7 @@ function visualOf(l: Loadout): VisualLoadout {
   return v
 }
 
-function PerkCard({ id, onClick, footer, disabled }: { id: PerkId; onClick?: () => void; footer?: preact.ComponentChildren; disabled?: boolean }) {
-  const p = PERKS[id]
-  return (
-    <button class="perk-card" style={{ '--pc': p.color }} onClick={onClick} disabled={disabled}>
-      <span class="perk-glyph" aria-hidden="true">
-        {p.glyph}
-      </span>
-      <b>{p.name}</b>
-      <span>{p.text}</span>
-      {footer}
-    </button>
-  )
-}
-
-function HullBar({ hp }: { hp: number }) {
-  const pct = Math.max(0, Math.min(100, hp * 100))
-  return (
-    <div class={`hull${pct < 35 ? ' low' : ''}`} role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Hull">
-      <i style={{ width: `${pct}%` }} />
-      <span>HULL {Math.round(pct)}%</span>
-    </div>
-  )
-}
+const ELEMENT_COLOR: Record<Element, string> = { PHYSICAL: 'var(--phy)', EXPLOSIVE: 'var(--exp)', ELECTRIC: 'var(--ele)', COMBINED: 'var(--com)' }
 
 function FloorTrack({ floor }: { floor: number }) {
   return (
@@ -88,7 +68,7 @@ function FloorTrack({ floor }: { floor: number }) {
         const state = n <= floor ? 'done' : n === floor + 1 ? 'here' : ''
         return (
           <li class={`${state}${BOSS_FLOORS[n] ? ' boss' : ''}`} title={BOSS_FLOORS[n] ? `Floor ${n}: ${BOSS_FLOORS[n].name}` : `Floor ${n}`}>
-            {BOSS_FLOORS[n] ? '☠' : n}
+            {BOSS_FLOORS[n] ? <IconSwords aria-label="Boss" /> : n}
           </li>
         )
       })}
@@ -102,33 +82,26 @@ function FloorTrack({ floor }: { floor: number }) {
 function Rig({ run }: { run: RunState }) {
   const floor = nextFloor(run)
   const loadout = useMemo(() => runLoadout(run.slots, floor), [run.slots, floor])
-  const sum = summarize(loadout)
+  const hpMax = Math.max(1, Math.round(summarize(loadout).health * (run.perks.includes('hull') ? HULL_MULT : 1)))
   const { tier, level } = floorPower(floor)
   const [editing, setEditing] = useState(false)
   return (
     <div class="panel run-rig">
-      <div class="rig-stage" style={{ backgroundImage: `url(${sceneImage('scrapyard', 700)})` }}>
+      <div class="mech-card" style={{ backgroundImage: `url(${sceneImage(sceneFor(floor), 700)})` }}>
         <MechView items={visualOf(loadout)} fill={0.78} ground={0.84} />
       </div>
-      <HullBar hp={run.hp} />
+      <div title="Hull: damage carries between fights">
+        <Gauge kind="hp" value={run.hp * hpMax} max={hpMax} />
+      </div>
       <div class="row" style={{ gap: 6 }}>
-        <span class="chip num" title="Max HP">
-          HP {Math.round(sum.health * (run.perks.includes('hull') ? 1.2 : 1)).toLocaleString()}
+        <span class="chip" title="Run parts scale with the floor">
+          <TierLabel tier={tier} /> Lv {level}
         </span>
-        <span class="chip num">{sum.weight} kg</span>
-        <span class="chip num" title="Energy capacity / regen per turn">
-          ⚡ {sum.eneCap}/{sum.eneReg}
-        </span>
-        <span class="chip num" title="Heat capacity / cooling per cooldown">
-          🔥 {sum.heaCap}/{sum.heaCol}
-        </span>
-        <span class="chip num" title="Parts scale with the floor">
-          {TIER_NAMES[tier]} Lv {level}
-        </span>
-        <span class="chip num scrap-chip" title="Scrap: spend it at caches and anomalies">
-          ⚙ {run.scrap}
+        <span class="chip num" title="Scrap: spend it at caches and anomalies">
+          <Scrap /> {run.scrap}
         </span>
       </div>
+      <MechStats loadout={loadout} />
       <div>
         <span class="label">Overclocks</span>
         <div class="row" style={{ gap: 6, marginTop: 4 }}>
@@ -158,7 +131,7 @@ function Rig({ run }: { run: RunState }) {
                       else audio.play('coin')
                     }}
                   >
-                    Strip +5 ⚙
+                    Strip +5 <Scrap />
                   </button>
                 )}
               </li>
@@ -209,12 +182,16 @@ function PartOffer({ run, defId, selected, onSelect, price, sold }: { run: RunSt
         </div>
         <div class="offer-body">
           <b>{def.name}</b>
-          <span class="muted" style={{ fontSize: 12 }}>
-            {TYPE_LABEL[def.type]} · {def.element.toLowerCase()}
-          </span>
+          <div class="row" style={{ gap: 6 }}>
+            <TierLabel tier={r.tier} />
+            <span class="muted" style={{ fontSize: 12 }}>
+              {TYPE_LABEL[def.type]}
+            </span>
+            <ElementLabel def={def} />
+          </div>
           {price !== undefined ? (
             <button class="btn gold small" disabled={sold || run.scrap < price} onClick={onSelect}>
-              {sold ? 'Sold' : `⚙ ${price}`}
+              {sold ? 'Sold' : <><Scrap /> {price}</>}
             </button>
           ) : (
             <button class="btn blue small" onClick={onSelect}>
@@ -258,7 +235,7 @@ function PartDraft({ run, p }: { run: RunState; p: RunPending & { kind: 'part' }
               audio.play('coin')
             }}
           >
-            Melt it all down (+{p.skipScrap} ⚙)
+            Melt it all down (+{p.skipScrap} <Scrap />)
           </button>
         </div>
       )}
@@ -300,7 +277,9 @@ function Cache({ run, p }: { run: RunState; p: RunPending & { kind: 'cache' } })
     <div class="panel run-choice">
       <div class="panel-head">
         <h2>Scrap Cache</h2>
-        <span class="muted">You have ⚙ {run.scrap} scrap.</span>
+        <span class="chip num">
+          <Scrap /> {run.scrap}
+        </span>
       </div>
       <div class="offers">
         {p.parts.map((o, i) => (
@@ -325,14 +304,16 @@ function Cache({ run, p }: { run: RunState; p: RunPending & { kind: 'cache' } })
             id={p.perk.id}
             disabled={p.perk.sold || run.scrap < p.perk.price}
             onClick={() => done(runBuy({ perk: true }))}
-            footer={<span class="price">{p.perk.sold ? 'Sold' : `⚙ ${p.perk.price}`}</span>}
+            footer={<span class="price">{p.perk.sold ? 'Sold' : <><Scrap /> {p.perk.price}</>}</span>}
           />
         )}
         <button class="perk-card" style={{ '--pc': 'var(--ele)' }} disabled={p.repair.sold || run.hp >= 1 || run.scrap < p.repair.price} onClick={() => done(runBuy({ repair: true }))}>
-          <span class="perk-glyph">🔧</span>
+          <span class="perk-glyph">
+            <IconWrench />
+          </span>
           <b>Hull Patch</b>
           <span>Repair {Math.round(p.repair.amount * 100)}% of your hull.</span>
-          <span class="price">{p.repair.sold ? 'Sold' : `⚙ ${p.repair.price}`}</span>
+          <span class="price">{p.repair.sold ? 'Sold' : <><Scrap /> {p.repair.price}</>}</span>
         </button>
       </div>
       <div class="row" style={{ justifyContent: 'flex-end' }}>
@@ -396,10 +377,11 @@ function RouteCard({ run, kind }: { run: RunState; kind: NodeKind }) {
       <p>{info.text}</p>
       {enemy && (
         <>
-          <div class="route-mech">
-            <MechView items={visualOf(enemy.loadout)} facing={-1} fill={0.8} platform={false} animate={false} />
+          <div class="mech-card">
+            <MechView items={visualOf(enemy.loadout)} facing={-1} fill={0.8} animate={false} />
           </div>
           <div class="row" style={{ gap: 6 }}>
+            <span class="chip num">HP {summarize(enemy.loadout).health.toLocaleString()}</span>
             <span class={`chip num${powerRating(enemy.loadout) > mine * 1.15 ? ' warn' : ''}`}>Power {powerRating(enemy.loadout).toLocaleString()}</span>
             {enemy.perks.map((p) => (
               <PerkBadge id={p} small />
@@ -437,19 +419,25 @@ function Lobby() {
             <IconClose /> Back
           </button>
         </div>
-        <div class="kits">
+        <div class="starters run-kits">
           {kits.map((kit) => {
             const l = runLoadout(kit.slots, 1)
             return (
-              <button class={`kit-card el-${kit.element}`} onClick={() => choose(kit)}>
-                <span class="label">{kit.element.toLowerCase()}</span>
-                <h3>{kit.name}</h3>
-                <div class="kit-mech">
-                  <MechView items={visualOf(l)} fill={0.8} />
+              <div class="starter" style={{ '--sc': ELEMENT_COLOR[kit.element] }}>
+                <MechView items={visualOf(l)} fill={0.8} />
+                <div>
+                  <h3>{kit.name}</h3>
+                  <span class="label">{kit.element.toLowerCase()} frame</span>
+                  <GearStrip loadout={l} />
+                  <div class="row" style={{ gap: 6 }}>
+                    <span class="chip num">HP {summarize(l).health.toLocaleString()}</span>
+                    <span class="chip num">Power {powerRating(l).toLocaleString()}</span>
+                  </div>
+                  <button class="btn primary" onClick={() => choose(kit)}>
+                    Take this frame
+                  </button>
                 </div>
-                <GearStrip loadout={l} />
-                <span class="chip num">HP {summarize(l).health.toLocaleString()} · Power {powerRating(l).toLocaleString()}</span>
-              </button>
+              </div>
             )
           })}
         </div>
@@ -525,6 +513,12 @@ function Lobby() {
   )
 }
 
+/** Kept parts arrive at Legendary, clamped to the part's own tier range (the store's grant does the same). */
+function keepTier(id: string): Tier {
+  const d = getItem(id)
+  return Math.min(d.maxTier, Math.max(d.startTier, 3)) as Tier
+}
+
 function Over({ run }: { run: RunState }) {
   const o = run.over!
   return (
@@ -553,7 +547,7 @@ function Over({ run }: { run: RunState }) {
       </div>
       {o.won && (
         <>
-          <h3 style={{ textAlign: 'center', margin: '16px 0 8px' }}>{o.kept ? `${getItem(o.kept).name} is in your inventory` : 'Keep one part (Legendary, level 1)'}</h3>
+          <h3 style={{ textAlign: 'center', margin: '16px 0 8px' }}>{o.kept ? `${getItem(o.kept).name} is in your inventory` : 'Keep one part (level 1, at Legendary where it can go that high)'}</h3>
           {!o.kept && (
             <div class="keep-grid">
               {o.keep.map((id) => (
@@ -561,7 +555,7 @@ function Over({ run }: { run: RunState }) {
                   <div style={{ width: 80 }}>
                     <ItemTile
                       def={getItem(id)}
-                      tier={Math.max(getItem(id).startTier, 3) as 3}
+                      tier={keepTier(id)}
                       onClick={() => {
                         const err = keepRunPart(id)
                         if (err) toast(err, 'bad')

@@ -39,21 +39,9 @@ import {
 } from '../icons'
 import { battle as battleSignal, go, type BattleSession } from '../state'
 import { InstanceTile, rangeText } from '../components/items'
+import { Gauge } from '../components/Gauge'
 import { PerkBadge } from '../components/perks'
 import type { PerkId } from '../../engine/perks'
-
-function Gauge({ kind, value, max, small, over }: { kind: 'hp' | 'en' | 'ht'; value: number; max: number; small?: boolean; over?: boolean }) {
-  const pct = Math.max(0, Math.min(100, (value / Math.max(1, max)) * 100))
-  return (
-    <div class={`gauge ${kind}${small ? ' small' : ''}${over ? ' over' : ''}`}>
-      {kind === 'hp' && <u style={{ width: `${pct}%` }} />}
-      <i style={{ width: `${pct}%` }} />
-      <span>
-        {Math.max(0, Math.round(value)).toLocaleString()} / {Math.round(max).toLocaleString()}
-      </span>
-    </div>
-  )
-}
 
 interface PanelProps {
   f: FighterSnap
