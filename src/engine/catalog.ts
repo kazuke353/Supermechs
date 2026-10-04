@@ -188,7 +188,7 @@ side('s_misfirerack', 'Misfire Rack', X, 'L-D', { weight: 63, dmg: [200, 398], h
 side('s_overdriverack', 'Overdrive Rack', X, 'L-D', { weight: 63, dmg: [213, 382], heaDmg: 112, expResDmg: 14, push: 1, retreat: 1, range: [3, 6], backfire: 180, heaCost: 75 }, 'rocket', 2)
 // Light, unshielded plasma that hits harder than Dawnfire in exchange for burning its own pilot.
 // No retreat: on a non-melee weapon it demanded jumping legs on top of the backfire.
-side('s_leakyplasma', 'Leaky Plasma', X, 'E-D', { weight: 37, dmg: [230, 370], heaDmg: 140, heaColDmg: 14, heaCapDmg: 20, range: [2, 4], backfire: 72, eneCost: 16, heaCost: 47 }, 'plasma', 2)
+side('s_leakyplasma', 'Leaky Plasma', X, 'E-D', { weight: 37, dmg: [230, 370], heaDmg: 140, heaColDmg: 8, heaCapDmg: 20, range: [2, 4], backfire: 88, eneCost: 16, heaCost: 47 }, 'plasma', 2)
 side('s_lavagrinder', 'Lava Grinder', X, 'L-D', { weight: 45, dmg: [191, 382], heaDmg: 90, expResDmg: 10, range: [1, 2], advance: 1, backfire: 144, heaCost: 62 }, 'saw', 1, melee)
 side('s_flameretreater', 'Flame Retreater', X, 'L-D', { weight: 34, dmg: [143, 255], heaDmg: 46, expResDmg: 5, range: [1, 2], retreat: 6, uses: 2, heaCost: 38 }, 'flamer', 3)
 
