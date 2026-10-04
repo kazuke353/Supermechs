@@ -22,7 +22,12 @@ if (mode === 'items') {
   }
   document.body.append(wrap)
 } else {
-  const builds: Partial<Record<SlotName, string>>[] = [
+  // ?mode=mech&build=torso:t_x,legs:l_y,side1:s_z;torso:... renders custom loadouts, ';' between mechs.
+  const custom = params
+    .get('build')
+    ?.split(';')
+    .map((b) => Object.fromEntries(b.split(',').map((kv) => kv.split(':'))) as Partial<Record<SlotName, string>>)
+  const builds: Partial<Record<SlotName, string>>[] = custom ?? [
     { torso: 't_ironclad', legs: 'l_stompers', side1: 's_servicerifle', side2: 's_scrapcannon', side3: 's_cleaver', side4: 's_gatling', top1: 'tp_rustymortar', top2: 'tp_nighthawk', drone: 'd_buzz' },
     { torso: 't_hellforge', legs: 'l_magmapaws', side1: 's_infernoblade', side2: 's_scorcher', side3: 's_pyroclast', side4: 's_dawnfire', top1: 'tp_supreme', top2: 'tp_sunfire', drone: 'd_emberfly' },
     { torso: 't_stormmonarch', legs: 'l_sparkrunners', side1: 's_teslacoil', side2: 's_brightlance', side3: 's_arcsaber', side4: 's_bunkerbuster', top1: 'tp_frenzyrail', top2: 'tp_dreamshock', drone: 'd_raildrone' },

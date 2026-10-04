@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { chooseAction } from '../src/engine/ai'
 import { applyAction, cloneState, createBattle, type BattleEvent, type UseEvent } from '../src/engine/battle'
+import { getItem } from '../src/engine/catalog'
 import { validateLoadout } from '../src/engine/mech'
 import { CRIT_MULT, PERK_IDS, type PerkId } from '../src/engine/perks'
 import { Rng } from '../src/engine/rng'
@@ -297,7 +298,11 @@ describe('scrapyard run in the store', () => {
     expect(over.won).toBe(true)
     expect(store.save.value.runRecords.wins).toBe(1)
     const n = store.save.value.inventory.length
-    expect(store.keepRunPart(over.keep[0])).toBeNull()
+    // A kept part is granted at Legendary but never above its own tier range, so Common to Epic
+    // parts stay Epic. Pick one that can reach Legendary, whatever the seeded kit happens to hold.
+    const keepable = over.keep.find((id) => getItem(id).maxTier >= 3)
+    expect(keepable).toBeDefined()
+    expect(store.keepRunPart(keepable!)).toBeNull()
     expect(store.save.value.inventory).toHaveLength(n + 1)
     expect(store.save.value.inventory.at(-1)!.tier).toBeGreaterThanOrEqual(3)
     expect(store.keepRunPart(over.keep[1])).toBe('You already kept a part.')

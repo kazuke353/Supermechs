@@ -1,5 +1,9 @@
 # Item expansion research
 
+Expansion IV, the Armory, adds 123 parts across every slot. See
+[Armory research and balance notes](armory-research.md) for sources, the family
+map, the balance method and preview instructions.
+
 Expansion III adds twelve individually drawn weapons and drones. See
 [Original Arsenal research and design notes](arsenal-research.md) for sources,
 stat tradeoffs, distinct silhouettes and preview instructions.
