@@ -19,6 +19,7 @@ import {
   type UseEvent,
 } from '../engine/battle'
 import { getItem } from '../engine/catalog'
+import { PERKS, type PerkFx, type PerkId } from '../engine/perks'
 import { Rng } from '../engine/rng'
 import { SLOT_NAMES, type ItemDef, type Loadout } from '../engine/types'
 import type { VisualLoadout } from '../art/mech'
@@ -28,7 +29,7 @@ import { BattleScene } from './scene'
 import { HypeTracker, quip, type HitHype } from './hype'
 
 export type Control = 'human' | 'ai' | 'remote'
-export type BattleMode = 'campaign' | 'arena' | 'workshop' | 'local' | 'online'
+export type BattleMode = 'campaign' | 'arena' | 'workshop' | 'local' | 'online' | 'run'
 
 export interface PlayerSetup {
   name: string
@@ -37,6 +38,10 @@ export interface PlayerSetup {
   control: Control
   difficulty?: Difficulty
   rank?: number
+  /** Overclocks (Scrapyard Run). */
+  perks?: PerkId[]
+  /** Starting hull as a fraction of max HP. */
+  hpFraction?: number
 }
 
 export interface BattleSetup {
@@ -95,8 +100,8 @@ export class BattleController {
     this.setup = setup
     const p = setup.players
     const { state, events } = createBattle(
-      { name: p[0].name, mechName: p[0].mechName, loadout: p[0].loadout },
-      { name: p[1].name, mechName: p[1].mechName, loadout: p[1].loadout },
+      { name: p[0].name, mechName: p[0].mechName, loadout: p[0].loadout, perks: p[0].perks, hpFraction: p[0].hpFraction },
+      { name: p[1].name, mechName: p[1].mechName, loadout: p[1].loadout, perks: p[1].perks, hpFraction: p[1].hpFraction },
       { seed: setup.seed, arena: setup.arena, starter: setup.starter, positions: setup.positions },
     )
     this.state = state
@@ -294,6 +299,9 @@ export class BattleController {
           break
         case 'regen':
           break
+        case 'perk':
+          await this.showPerk(ev, true)
+          break
         case 'end': {
           const loser = opponentOf(ev.winner)
           if (ev.snap) this.hud.value = ev.snap
@@ -319,6 +327,52 @@ export class BattleController {
         }
       }
       if (ev.snap && ev.t !== 'end') this.hud.value = ev.snap
+    }
+  }
+
+  /** Floating callout and log line for an Overclock trigger. */
+  private async showPerk(fx: PerkFx, standalone: boolean) {
+    const scene = this.scene!
+    const def = PERKS[fx.perk]
+    const owner = fx.player
+    const foe = opponentOf(owner)
+    const who = this.name(owner)
+    switch (fx.perk) {
+      case 'crit':
+        scene.statText(foe, `CRITICAL +${fx.bonus}`, def.color)
+        audio.play('crit')
+        this.pushLog({ side: owner, text: `${who} landed a critical hit (+${fx.bonus})`, kind: 'action' })
+        break
+      case 'ambush':
+      case 'redline':
+      case 'executioner':
+        scene.statText(foe, `${def.name.toUpperCase()} +${fx.bonus}`, def.color)
+        this.pushLog({ side: owner, text: `${def.name} added ${fx.bonus} damage`, kind: 'action' })
+        break
+      case 'leech':
+        scene.statText(owner, `+${fx.heal} HP`, def.color)
+        this.pushLog({ side: owner, text: `${who} leeched ${fx.heal} HP`, kind: 'action' })
+        break
+      case 'bulkhead':
+        scene.banner('BULKHEAD', def.color, `${who} survives on 1 HP`, 1000)
+        audio.play('shield')
+        this.pushLog({ side: owner, text: `${who}'s Emergency Bulkhead held! (1 HP left)`, kind: 'warn' })
+        await scene.wait(700)
+        break
+      case 'spikes':
+      case 'tesla':
+        scene.impact(foe, fx.perk === 'tesla' ? 'ELECTRIC' : 'PHYSICAL', fx.damage ?? 0)
+        scene.damageText(foe, fx.damage ?? 0, fx.perk === 'tesla' ? 'ELECTRIC' : 'PHYSICAL')
+        scene.statText(foe, def.name.toUpperCase(), def.color)
+        this.pushLog({ side: owner, text: `${def.name} hit ${this.name(foe)} for ${fx.damage}`, kind: 'action' })
+        if (standalone) await scene.wait(450)
+        break
+      case 'dynamo':
+      case 'cryo':
+        scene.statText(owner, def.name.toUpperCase(), def.color)
+        break
+      default:
+        break
     }
   }
 
@@ -364,6 +418,7 @@ export class BattleController {
       if (d.eneCap) scene.statText(target, `${d.eneCap} ENERGY CAP`, '#6ff0ff')
       if (d.eneReg) scene.statText(target, `${d.eneReg} REGEN`, '#6ff0ff')
     }
+    for (const fx of ev.perks ?? []) await this.showPerk(fx, false)
     if (ev.backfire) {
       scene.impact(ev.player, ev.element, Math.min(200, ev.backfire))
       scene.damageText(ev.player, ev.backfire, ev.element)

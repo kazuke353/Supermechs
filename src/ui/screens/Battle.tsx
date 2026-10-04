@@ -39,6 +39,8 @@ import {
 } from '../icons'
 import { battle as battleSignal, go, type BattleSession } from '../state'
 import { InstanceTile, rangeText } from '../components/items'
+import { PerkBadge } from '../components/perks'
+import type { PerkId } from '../../engine/perks'
 
 function Gauge({ kind, value, max, small, over }: { kind: 'hp' | 'en' | 'ht'; value: number; max: number; small?: boolean; over?: boolean }) {
   const pct = Math.max(0, Math.min(100, (value / Math.max(1, max)) * 100))
@@ -61,9 +63,10 @@ interface PanelProps {
   actions: number
   portrait?: string
   rank?: number
+  perks?: PerkId[]
 }
 
-function PlayerPanel({ f, name, mech, right, actions, portrait, rank }: PanelProps) {
+function PlayerPanel({ f, name, mech, right, actions, portrait, rank, perks }: PanelProps) {
   return (
     <div class={`pp${right ? ' right' : ''}`}>
       <div class="portrait">{portrait && <img src={portrait} alt="" />}</div>
@@ -106,6 +109,7 @@ function PlayerPanel({ f, name, mech, right, actions, portrait, rank }: PanelPro
               <IconDrone /> DRONE
             </span>
           )}
+          {perks?.map((p) => <PerkBadge id={p} small />)}
         </div>
       </div>
     </div>
@@ -560,7 +564,7 @@ export function BattleScreen({ session }: { session: BattleSession }) {
       <div class="bezel">
         <div class="battle-screen">
           <div class="hud-top">
-            <PlayerPanel f={hud.fighters[0]} name={p[0].name} mech={p[0].mechName} actions={actionsFor(0)} portrait={portraits[0]} rank={p[0].rank} />
+            <PlayerPanel f={hud.fighters[0]} name={p[0].name} mech={p[0].mechName} actions={actionsFor(0)} portrait={portraits[0]} rank={p[0].rank} perks={p[0].perks} />
             <div class="hub">
               <span class="turnno">TURN {hud.turnCount}</span>
               <div class="row">
@@ -572,7 +576,7 @@ export function BattleScreen({ session }: { session: BattleSession }) {
                 </button>
               </div>
             </div>
-            <PlayerPanel f={hud.fighters[1]} name={p[1].name} mech={p[1].mechName} right actions={actionsFor(1)} portrait={portraits[1]} rank={p[1].rank} />
+            <PlayerPanel f={hud.fighters[1]} name={p[1].name} mech={p[1].mechName} right actions={actionsFor(1)} portrait={portraits[1]} rank={p[1].rank} perks={p[1].perks} />
           </div>
 
           <div class="stage">

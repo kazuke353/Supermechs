@@ -1,6 +1,7 @@
 import type { ItemInstance, SlotName, Tier } from '../engine/types'
 import { TIER_MAX_LEVEL } from '../engine/stats'
 import type { KitId } from './economy'
+import type { RunRecords, RunState } from './run'
 
 export interface MechSetup {
   id: string
@@ -75,6 +76,9 @@ export interface SaveData {
   started: boolean
   tutorialDone: boolean
   counter: number
+  /** The Scrapyard Run in progress (or just finished), if any. */
+  run: RunState | null
+  runRecords: RunRecords
 }
 
 /** 2: pilots start with an empty hangar and buy their first parts (older saves skip the tutorial). */
@@ -119,6 +123,8 @@ export function defaultSave(): SaveData {
     started: false,
     tutorialDone: false,
     counter: 1,
+    run: null,
+    runRecords: { runs: 0, wins: 0, bestFloor: 0 },
   }
 }
 
@@ -139,6 +145,8 @@ export function migrate(raw: unknown): SaveData {
     stats: { ...base.stats, ...r.stats },
     daily: { ...base.daily, ...r.daily },
     settings: { ...base.settings, ...r.settings },
+    runRecords: { ...base.runRecords, ...r.runRecords },
+    run: r.run ?? null,
     inventory: (r.inventory ?? []).map((i) => {
       const tier = Math.max(0, Math.min(5, i.tier)) as Tier
       return tier === 5 ? { ...i, tier, level: TIER_MAX_LEVEL[5], xp: 0 } : { ...i, tier }

@@ -16,6 +16,19 @@ import { ACHIEVEMENTS, levelUpReward, LOGIN_REWARDS, MAX_PILOT_LEVEL, QUEST_MAP,
 import { DEPOT_STOCK, depotPrice, purchaseBlock } from './depot'
 import { defaultSave, loadSave, today, writeSave, type MechSetup, type SaveData } from './save'
 import { TUTORIAL_REWARD, tutorialActive, tutorialComplete } from './tutorial'
+import {
+  anomalyChoices,
+  enterNode,
+  fitProblem,
+  loseRun,
+  newRun,
+  resolveAnomaly,
+  winFight,
+  type NodeKind,
+  type RunState,
+  type StarterKit,
+} from './run'
+import type { PerkId } from '../engine/perks'
 
 export const save = signal<SaveData>(loadSave() ?? defaultSave())
 export const storageOk = signal(true)
@@ -32,6 +45,9 @@ function persist() {
 export function update(fn: (s: SaveData) => void) {
   const s = save.value
   fn(s)
+  // The run is mutated in place but handed to components as props, and signal-aware
+  // components skip renders when props are shallowly equal: give them a fresh copy.
+  if (s.run) s.run = structuredClone(s.run)
   save.value = { ...s }
   persist()
 }
@@ -566,6 +582,209 @@ export function finishArena(opponentRank: number, o: BattleOutcome): RewardSumma
 export function finishCasual(o: BattleOutcome, trackStats: boolean): RewardSummary {
   if (trackStats) update((s) => recordStats(s, o))
   return { won: o.won, gold: 0, tokens: 0, xp: 0, items: [], levelUps: [] }
+}
+
+// ---------------------------------------------------------------------------
+// Scrapyard Run
+
+/** Pay out a finished run exactly once and update the records. */
+function settleRun(s: SaveData) {
+  const run = s.run
+  if (!run?.over || run.over.paid) return
+  const o = run.over
+  o.paid = true
+  s.gold += o.gold
+  s.tokens += o.tokens
+  addPilotXp(s, o.xp)
+  s.runRecords.bestFloor = Math.max(s.runRecords.bestFloor, o.floor)
+  if (o.won) s.runRecords.wins++
+}
+
+/** A run that was mid-battle when the page closed counts as lost (no save-scumming). */
+function recoverRun(s: SaveData) {
+  if (s.run && s.run.fighting && !s.run.over) {
+    loseRun(s.run)
+    settleRun(s)
+  }
+}
+recoverRun(save.value)
+
+function withRun(fn: (run: RunState, s: SaveData) => string | null | void): string | null {
+  const s = save.value
+  if (!s.run || s.run.over) return 'No run in progress.'
+  let err: string | null = null
+  update((st) => {
+    err = fn(st.run!, st) ?? null
+    settleRun(st)
+  })
+  return err
+}
+
+export function startRun(seed: number, kit: StarterKit) {
+  update((s) => {
+    s.run = newRun(seed, kit)
+    s.runRecords.runs++
+  })
+}
+
+/** Take a route. Fights return null here; the caller starts the battle. */
+export function runEnter(kind: NodeKind): string | null {
+  const run = save.value.run
+  if (!run || run.over) return 'No run in progress.'
+  if (run.pending.length) return 'Finish your current choice first.'
+  if (!run.options.some((o) => o.kind === kind)) return 'That route is not available.'
+  let msg: string | null = null
+  update((s) => {
+    if (kind === 'fight' || kind === 'elite' || kind === 'boss') s.run!.fighting = kind
+    else msg = enterNode(s.run!, kind)
+  })
+  return msg
+}
+
+export function finishRunBattle(kind: NodeKind, o: BattleOutcome, hpLeft: number): RewardSummary {
+  const summary: RewardSummary = { won: o.won, gold: 0, tokens: 0, xp: 0, items: [], levelUps: [] }
+  update((s) => {
+    recordStats(s, o)
+    const run = s.run
+    if (!run || run.over) return
+    if (o.won) winFight(run, kind, hpLeft)
+    else loseRun(run)
+    const before = s.pilot.level
+    settleRun(s)
+    // winFight/loseRun may have just ended the run.
+    const over = (run as RunState).over as RunState['over']
+    if (over) {
+      summary.gold = over.gold
+      summary.tokens = over.tokens
+      summary.xp = over.xp
+      for (let l = before + 1; l <= s.pilot.level; l++) summary.levelUps.push({ level: l, ...levelUpReward(l) })
+    }
+  })
+  return summary
+}
+
+/** Take a drafted part into `slot` (or skip it for scrap with defId null). */
+export function runTakePart(defId: string | null, slot?: SlotName): string | null {
+  return withRun((run) => {
+    const p = run.pending[0]
+    if (p?.kind !== 'part') return 'Nothing to salvage.'
+    if (defId === null) {
+      run.scrap += p.skipScrap
+      run.pending.shift()
+      return
+    }
+    if (!p.options.includes(defId) || !slot) return 'Pick a part and a slot.'
+    const problem = fitProblem(run, defId, slot)
+    if (problem) return problem
+    run.slots[slot] = defId
+    run.pending.shift()
+  })
+}
+
+export function runPickPerk(id: PerkId | null): string | null {
+  return withRun((run) => {
+    const p = run.pending[0]
+    if (p?.kind !== 'perk') return 'No Overclock to pick.'
+    if (id && !p.options.includes(id)) return 'That Overclock is not on offer.'
+    if (id) run.perks.push(id)
+    run.pending.shift()
+  })
+}
+
+export function runBuy(what: { part: number; slot: SlotName } | { perk: true } | { repair: true }): string | null {
+  return withRun((run) => {
+    const c = run.pending[0]
+    if (c?.kind !== 'cache') return 'No trader here.'
+    if ('part' in what) {
+      const offer = c.parts[what.part]
+      if (!offer || offer.sold) return 'Sold out.'
+      if (run.scrap < offer.price) return 'Not enough scrap.'
+      const problem = fitProblem(run, offer.defId, what.slot)
+      if (problem) return problem
+      run.scrap -= offer.price
+      run.slots[what.slot] = offer.defId
+      offer.sold = true
+    } else if ('perk' in what) {
+      if (!c.perk || c.perk.sold) return 'Sold out.'
+      if (run.scrap < c.perk.price) return 'Not enough scrap.'
+      run.scrap -= c.perk.price
+      run.perks.push(c.perk.id)
+      c.perk.sold = true
+    } else {
+      if (c.repair.sold) return 'Sold out.'
+      if (run.hp >= 1) return 'Your hull is already intact.'
+      if (run.scrap < c.repair.price) return 'Not enough scrap.'
+      run.scrap -= c.repair.price
+      run.hp = Math.min(1, run.hp + c.repair.amount)
+      c.repair.sold = true
+    }
+  })
+}
+
+/** Leave the current cache. */
+export function runLeave(): string | null {
+  return withRun((run) => {
+    if (run.pending[0]?.kind !== 'cache') return 'Nothing to leave.'
+    run.pending.shift()
+  })
+}
+
+/** Remove a part from the run mech to save weight. Torso and legs stay. */
+export function runScrapPart(slot: SlotName): string | null {
+  return withRun((run) => {
+    if (slot === 'torso' || slot === 'legs') return 'Your mech needs a torso and legs.'
+    if (!run.slots[slot]) return 'That slot is empty.'
+    delete run.slots[slot]
+    run.scrap += 5
+  })
+}
+
+/** Resolve the anomaly at the head of the queue. Returns the outcome line or an error. */
+export function runAnomaly(choice: number): { text: string } | string {
+  const run = save.value.run
+  const p = run?.pending[0]
+  if (!run || run.over || p?.kind !== 'anomaly') return 'No anomaly here.'
+  const c = anomalyChoices(run, p.id)[choice]
+  if (!c) return 'Unknown choice.'
+  if (c.blocked) return c.blocked
+  let text = ''
+  update((s) => {
+    const r = s.run!
+    r.pending.shift()
+    text = resolveAnomaly(r, p.id, choice)
+  })
+  return { text }
+}
+
+export function abandonRun() {
+  update((s) => {
+    if (!s.run || s.run.over) return
+    loseRun(s.run)
+    settleRun(s)
+  })
+}
+
+/** After a full clear, keep one run part permanently (Legendary, level 1). */
+export function keepRunPart(defId: string): string | null {
+  const o = save.value.run?.over
+  if (!o?.won) return 'Only a full clear lets you keep a part.'
+  if (o.kept) return 'You already kept a part.'
+  if (!o.keep.includes(defId)) return 'That part was not on your mech.'
+  update((s) => {
+    s.run!.over!.kept = defId
+    grant(s, defId, 3, 1)
+  })
+  return null
+}
+
+/** Close the results of a finished run. */
+export function closeRun() {
+  update((s) => {
+    if (s.run?.over) {
+      settleRun(s)
+      s.run = null
+    }
+  })
 }
 
 export function updateSettings(patch: Partial<SaveData['settings']>) {

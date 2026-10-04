@@ -15,6 +15,8 @@ export type SfxName =
   | 'boxOpen'
   | 'reveal'
   | 'levelUp'
+  | 'crit'
+  | 'shield'
   | 'victory'
   | 'defeat'
   | 'walk'
@@ -216,6 +218,16 @@ class AudioEngine {
         ;[1, 1.25, 1.5, 2].forEach((m, i) => this.tone({ type: 'triangle', freq: base * m, dur: 0.35, gain: 0.14 * v, delay: i * 0.07 }))
         break
       }
+      case 'crit':
+        this.tone({ type: 'square', freq: 1760 * p, to: 2637, dur: 0.09, gain: 0.1 * v })
+        this.tone({ type: 'triangle', freq: 2637 * p, dur: 0.22, gain: 0.12 * v, delay: 0.07 })
+        this.noise({ dur: 0.12, filter: 'highpass', freq: 5000, gain: 0.2 * v })
+        break
+      case 'shield':
+        this.tone({ type: 'sine', freq: 140, to: 70, dur: 0.5, gain: 0.45 * v })
+        this.tone({ type: 'triangle', freq: 880, to: 440, dur: 0.6, gain: 0.12 * v, detune: 8 })
+        this.noise({ dur: 0.3, filter: 'bandpass', freq: 1500, q: 4, gain: 0.25 * v })
+        break
       case 'levelUp':
         ;[523, 659, 784, 1047, 1319].forEach((f, i) => this.tone({ type: 'square', freq: f, dur: 0.18, gain: 0.07 * v, delay: i * 0.08 }))
         break

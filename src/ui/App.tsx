@@ -15,6 +15,7 @@ import { Home } from './screens/Home'
 import { Intro } from './screens/Intro'
 import { HelpModal, LoginModal, SettingsModal, TutorialDoneModal } from './screens/Modals'
 import { Quests } from './screens/Quests'
+import { Run } from './screens/Run'
 import { Shop } from './screens/Shop'
 import { Versus } from './screens/Versus'
 import { Workshop } from './screens/Workshop'
@@ -37,6 +38,7 @@ const SCREENS: Record<Route, () => preact.JSX.Element | null> = {
   workshop: Workshop,
   versus: Versus,
   quests: Quests,
+  run: Run,
 }
 
 function TopBar() {
@@ -85,7 +87,7 @@ function Nav() {
   return (
     <nav class="nav" aria-label="Main">
       {NAV.map(({ id, label, Icon }) => {
-        const on = r === id || (id === 'home' && ['campaign', 'arena', 'workshop', 'versus'].includes(r))
+        const on = r === id || (id === 'home' && ['campaign', 'arena', 'workshop', 'versus', 'run'].includes(r))
         return (
           <button
             class={`sq${on ? ' on' : ''}${hint === id && !on ? ' hint' : ''}`}

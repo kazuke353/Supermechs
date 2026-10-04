@@ -7,7 +7,8 @@ import type { Side } from '../engine/battle'
 import type { Loadout, Tier } from '../engine/types'
 import { makeOpponent, type ArenaOpponent } from '../game/arena'
 import { CHAPTERS, MISSIONS, missionLoadout, type SceneId } from '../game/campaign'
-import { activeMech, finishArena, finishCasual, finishMission, loadoutOf, save, type BattleOutcome } from '../game/store'
+import { activeMech, finishArena, finishCasual, finishMission, finishRunBattle, loadoutOf, save, type BattleOutcome } from '../game/store'
+import { nextFloor, runEnemy, runLoadout, sceneFor, type NodeKind } from '../game/run'
 import type { EndInfo } from '../battle/controller'
 import { battle, toast, type Route } from './state'
 
@@ -77,6 +78,27 @@ export function startArena(opp: ArenaOpponent) {
     title: 'Ranked Arena',
   }
   start(setup, (end) => finishArena(opp.rank, outcome(end, 0)), 'arena')
+}
+
+/** Fight the enemy on the current Scrapyard Run floor (the store has already marked the run as fighting). */
+export function startRunBattle(kind: NodeKind) {
+  const s = save.value
+  const run = s.run
+  if (!run || run.over) return
+  const floor = nextFloor(run)
+  const enemy = runEnemy(run, kind)
+  const setup: BattleSetup = {
+    mode: 'run',
+    scene: sceneFor(floor),
+    arena: false,
+    seed: randomSeed(),
+    players: [
+      { name: s.pilot.name, mechName: 'Scrap Runner', loadout: runLoadout(run.slots, floor), control: 'human', perks: [...run.perks], hpFraction: run.hp },
+      { name: enemy.name, mechName: enemy.mechName, loadout: enemy.loadout, control: 'ai', difficulty: enemy.difficulty, perks: enemy.perks },
+    ],
+    title: `Scrapyard Run · Floor ${floor}`,
+  }
+  start(setup, (end) => finishRunBattle(kind, outcome(end, 0), Math.max(0, end.hp[0])), 'run')
 }
 
 export function findArenaOpponent(): ArenaOpponent {

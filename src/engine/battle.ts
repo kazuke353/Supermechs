@@ -25,6 +25,22 @@ import { nextRandom } from './rng'
 import { summarize } from './mech'
 import { buffItemStats } from './stats'
 import {
+  CRIT_CHANCE,
+  CRIT_MULT,
+  CRYO_COOL,
+  CRYO_ENERGY,
+  EXECUTE_BELOW,
+  EXECUTE_MULT,
+  HULL_MULT,
+  LEECH_RATE,
+  REACTOR_MULT,
+  REDLINE_MULT,
+  SPIKES_RATE,
+  TESLA_RATE,
+  type PerkFx,
+  type PerkId,
+} from './perks'
+import {
   SLOT_NAMES,
   WEAPON_SLOTS,
   type Element,
@@ -87,6 +103,10 @@ export interface Fighter {
   droneActive: boolean
   usedThisTurn: SlotName[]
   stats: FighterStats
+  /** Overclocks (see perks.ts). Empty outside Scrapyard Runs. */
+  perks: PerkId[]
+  /** Remaining triggers of once-per-battle perks. */
+  charges: Partial<Record<PerkId, number>>
 }
 
 export type Side = 0 | 1
@@ -152,6 +172,8 @@ export interface UseEvent {
   selfEnergy: number
   moves: Move[]
   usesLeft: number | null
+  /** Overclocks that triggered during this use. */
+  perks?: PerkFx[]
   snap?: BattleSnapshot
 }
 
@@ -164,6 +186,7 @@ export type BattleEvent = (
   | { t: 'droneToggle'; player: Side; active: boolean }
   | { t: 'droneIdle'; player: Side; reason: string }
   | { t: 'regen'; player: Side; energy: number }
+  | ({ t: 'perk' } & PerkFx)
   | { t: 'end'; winner: Side; reason: 'destroyed' | 'forfeit' | 'timeout' }
 ) & { snap?: BattleSnapshot }
 
@@ -171,6 +194,9 @@ export interface FighterInit {
   name: string
   mechName: string
   loadout: Loadout
+  perks?: PerkId[]
+  /** Start the battle damaged (0-1 of max HP). Scrapyard Runs carry damage between fights. */
+  hpFraction?: number
 }
 
 export interface BattleOptions {
@@ -201,26 +227,35 @@ function makeFighter(init: FighterInit, position: number, arena: boolean): Fight
     }
     if (typeof stats.uses === 'number') uses[slot] = stats.uses
   }
+  const perks = [...new Set(init.perks ?? [])]
+  const has = (p: PerkId) => perks.includes(p)
+  const hpMax = Math.max(1, Math.round(summary.health * (has('hull') ? HULL_MULT : 1)))
+  const boost = (v: number) => (has('reactor') ? Math.round(v * REACTOR_MULT) : v)
+  const charges: Partial<Record<PerkId, number>> = {}
+  if (has('bulkhead')) charges.bulkhead = 1
+  if (has('ambush')) charges.ambush = 1
   return {
     name: init.name,
     mechName: init.mechName,
     items,
     uses,
     position,
-    hp: Math.max(1, summary.health),
-    hpMax: Math.max(1, summary.health),
-    energy: summary.eneCap,
-    eneCap: summary.eneCap,
-    eneReg: summary.eneReg,
+    hp: Math.max(1, Math.round(hpMax * Math.min(1, init.hpFraction ?? 1))),
+    hpMax,
+    energy: boost(summary.eneCap),
+    eneCap: boost(summary.eneCap),
+    eneReg: boost(summary.eneReg),
     heat: 0,
-    heaCap: summary.heaCap,
-    heaCol: summary.heaCol,
+    heaCap: boost(summary.heaCap),
+    heaCol: boost(summary.heaCol),
     phyRes: summary.phyRes,
     expRes: summary.expRes,
     eleRes: summary.eleRes,
     droneActive: false,
     usedThisTurn: [],
     stats: { damageDealt: 0, damageTaken: 0, biggestHit: 0, heatDealt: 0, energyDrained: 0, shutdowns: 0 },
+    perks,
+    charges,
   }
 }
 
@@ -258,6 +293,7 @@ export function cloneState(s: BattleState): BattleState {
     uses: { ...f.uses },
     usedThisTurn: [...f.usedThisTurn],
     stats: { ...f.stats },
+    charges: { ...f.charges },
   })
   return { ...s, fighters: [cf(s.fighters[0]), cf(s.fighters[1])] }
 }
@@ -516,7 +552,7 @@ function dealEffects(
   item: BattleItem,
   hit: boolean,
   opts?: ApplyOptions,
-): Pick<UseEvent, 'damage' | 'breakBonus' | 'targetDelta' | 'backfire' | 'selfHeat' | 'selfEnergy' | 'hit'> {
+): Pick<UseEvent, 'damage' | 'breakBonus' | 'targetDelta' | 'backfire' | 'selfHeat' | 'selfEnergy' | 'hit' | 'perks'> {
   const me = state.fighters[side]
   const them = state.fighters[opponentOf(side)]
   const s = item.stats
@@ -533,11 +569,15 @@ function dealEffects(
   const targetDelta: Delta = {}
   if (!hit) return { hit, damage: 0, breakBonus: 0, targetDelta, backfire, selfHeat, selfEnergy }
 
-  const { damage, breakBonus } = computeDamage(s, them, roll(state, opts))
+  const fx: PerkFx[] = []
+  const base = computeDamage(s, them, roll(state, opts))
+  const damage = boostDamage(state, side, base.damage, fx, opts)
+  const breakBonus = base.breakBonus
   them.hp -= damage
   me.stats.damageDealt += damage
   me.stats.biggestHit = Math.max(me.stats.biggestHit, damage)
   them.stats.damageTaken += damage
+  if (damage > 0) afterHit(state, side, damage, fx)
 
   if (s.heaDmg) {
     them.heat += s.heaDmg
@@ -578,7 +618,74 @@ function dealEffects(
     them.eneReg = Math.max(1, them.eneReg - s.eneRegDmg)
     targetDelta.eneReg = them.eneReg - before
   }
-  return { hit, damage, breakBonus, targetDelta, backfire, selfHeat, selfEnergy }
+  return { hit, damage, breakBonus, targetDelta, backfire, selfHeat, selfEnergy, perks: fx.length ? fx : undefined }
+}
+
+// ---------------------------------------------------------------------------
+// Overclocks
+
+function hasPerk(f: Fighter, p: PerkId): boolean {
+  return f.perks.length > 0 && f.perks.includes(p)
+}
+
+/** Damage multipliers from the attacker's perks. Records each one that fires. */
+function boostDamage(state: BattleState, side: Side, damage: number, fx: PerkFx[], opts?: ApplyOptions): number {
+  const me = state.fighters[side]
+  if (!me.perks.length || damage <= 0) return damage
+  const them = state.fighters[opponentOf(side)]
+  const add = (perk: PerkId, mult: number) => {
+    const next = Math.round(damage * mult)
+    fx.push({ perk, player: side, bonus: next - damage })
+    damage = next
+  }
+  if ((me.charges.ambush ?? 0) > 0) {
+    me.charges.ambush!--
+    add('ambush', 2)
+  }
+  if (hasPerk(me, 'redline') && me.hp < me.hpMax / 2) add('redline', REDLINE_MULT)
+  if (hasPerk(me, 'executioner') && them.hp < them.hpMax * EXECUTE_BELOW) add('executioner', EXECUTE_MULT)
+  if (hasPerk(me, 'crit')) {
+    if (opts?.expected) damage = Math.round(damage * (1 + CRIT_CHANCE * (CRIT_MULT - 1)))
+    else if (nextRandom(state) < CRIT_CHANCE) add('crit', CRIT_MULT)
+  }
+  return damage
+}
+
+/** Once-per-battle bulkhead: a fatal blow leaves the mech on 1 HP. */
+function guard(state: BattleState, side: Side, fx: PerkFx[]) {
+  const f = state.fighters[side]
+  if (f.hp > 0 || !(f.charges.bulkhead ?? 0)) return
+  f.charges.bulkhead!--
+  fx.push({ perk: 'bulkhead', player: side, heal: 1 - f.hp })
+  f.hp = 1
+}
+
+/** Reactions to `side` landing `damage` on its opponent: bulkhead, leech, spikes. */
+function afterHit(state: BattleState, side: Side, damage: number, fx: PerkFx[]) {
+  const me = state.fighters[side]
+  const other = opponentOf(side)
+  const them = state.fighters[other]
+  guard(state, other, fx)
+  if (hasPerk(me, 'leech') && me.hp > 0) {
+    const heal = Math.min(me.hpMax - me.hp, Math.round(damage * LEECH_RATE))
+    if (heal > 0) {
+      me.hp += heal
+      fx.push({ perk: 'leech', player: side, heal })
+    }
+  }
+  if (hasPerk(them, 'spikes')) {
+    const back = Math.max(1, Math.round(damage * SPIKES_RATE))
+    me.hp -= back
+    me.stats.damageTaken += back
+    them.stats.damageDealt += back
+    fx.push({ perk: 'spikes', player: other, damage: back })
+    guard(state, side, fx)
+  }
+}
+
+/** Emit standalone perk events (movement, cooldown, aura). */
+function emitFx(state: BattleState, events: EventList, fx: PerkFx[]) {
+  for (const f of fx) emit(state, events, { t: 'perk', ...f })
 }
 
 /** Knockback, pull, recoil, retreat and advance, in the original order. */
@@ -708,6 +815,20 @@ function endTurn(state: BattleState, events: EventList, opts?: ApplyOptions) {
     }
   }
 
+  // Tesla Aura shocks an enemy that ends its turn adjacent.
+  const other = opponentOf(side)
+  const them = state.fighters[other]
+  if (hasPerk(them, 'tesla') && Math.abs(me.position - them.position) === 1) {
+    const damage = Math.max(1, Math.round(me.hpMax * TESLA_RATE))
+    me.hp -= damage
+    me.stats.damageTaken += damage
+    them.stats.damageDealt += damage
+    const fx: PerkFx[] = [{ perk: 'tesla', player: other, damage }]
+    guard(state, side, fx)
+    emitFx(state, events, fx)
+    if (checkDeath(state, events)) return
+  }
+
   passTurn(state, events)
 }
 
@@ -769,6 +890,11 @@ export function applyAction(state: BattleState, action: Action, opts?: ApplyOpti
       const move: Move = { player: side, from: me.position, to: action.to, kind: jump ? 'jump' : 'walk' }
       me.position = action.to
       emit(state, events, { t: 'walk', move })
+      if (hasPerk(me, 'dynamo')) {
+        me.energy = Math.min(me.eneCap, me.energy + Math.floor(me.eneReg / 2))
+        me.heat = Math.max(0, me.heat - Math.floor(me.heaCol / 2))
+        emitFx(state, events, [{ perk: 'dynamo', player: side }])
+      }
       break
     }
     case 'fire':
@@ -794,9 +920,14 @@ export function applyAction(state: BattleState, action: Action, opts?: ApplyOpti
       break
     }
     case 'cooldown': {
-      const amount = Math.min(me.heat, me.heaCol)
+      const cryo = hasPerk(me, 'cryo')
+      const amount = Math.min(me.heat, cryo ? Math.round(me.heaCol * CRYO_COOL) : me.heaCol)
       me.heat -= amount
       emit(state, events, { t: 'cooldown', player: side, amount, forced: 'none' })
+      if (cryo) {
+        me.energy = Math.min(me.eneCap, me.energy + Math.round(me.eneCap * CRYO_ENERGY))
+        emitFx(state, events, [{ perk: 'cryo', player: side }])
+      }
       break
     }
   }
