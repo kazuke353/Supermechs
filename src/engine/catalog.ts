@@ -329,8 +329,11 @@ special('GRAPPLING_HOOK', 'h_shock', 'Shock Hook', E, 'L-D', { weight: 11, dmg: 
 
 // ---------------------------------------------------------------------------
 // Modules. art v = [icon] 0 plating, 1 shield, 2 heat, 3 energy, 4 combo, 5 fortress, 6 cooler, 7 battery
+const MODULE_WEIGHT_SCALE = 0.9 // modules weigh 10% less than their listed weight
+
 function mod(id: string, name: string, el: Element, range: string, s: Short, icon: number, lore?: string) {
-  add('MODULE', id, name, el, range, s, { kind: 'module', v: [icon] }, lore ? { lore } : {})
+  const stats = s.weight ? { ...s, weight: Math.max(1, Math.round(s.weight * MODULE_WEIGHT_SCALE)) } : s
+  add('MODULE', id, name, el, range, stats, { kind: 'module', v: [icon] }, lore ? { lore } : {})
 }
 mod('m_scrapplating', 'Scrap Plating', P, 'C-R', { weight: 35, health: 95 }, 0)
 mod('m_ironplating', 'Iron Plating', P, 'C-E', { weight: 40, health: 145 }, 0)
