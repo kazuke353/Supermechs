@@ -247,15 +247,15 @@ top('tp_wasteland', 'Wasteland', X, 'E-D', { weight: 66, dmg: [216, 319], heaDmg
 top('tp_ironinferno', 'Iron Inferno', X, 'L-D', { weight: 52, dmg: [215, 280], heaDmg: 75, expResDmg: 5, range: [4, 8], eneCost: 16, heaCost: 47 }, 'artillery', 2)
 top('tp_desertviper', 'Desert Viper', X, 'L-D', { weight: 63, dmg: [202, 346], heaDmg: 75, heaColDmg: 7, pull: 1, range: [4, 8], eneCost: 25, heaCost: 75 }, 'railgun', 1)
 top('tp_ravagerpod', 'Ravager Pod', X, 'E-D', { weight: 51, dmg: [158, 238], heaDmg: 109, heaCapDmg: 30, range: [4, 8], eneCost: 16, heaCost: 47 }, 'pod', 1)
-top('tp_sunfire', 'Sunfire Scope', X, 'L-D', { weight: 21, dmg: [600, 783], heaDmg: 224, expResDmg: 15, range: [8, 8], uses: 1, eneCost: 31, heaCost: 155 }, 'scope', 0)
+top('tp_sunfire', 'Sunfire Scope', X, 'L-D', { weight: 21, dmg: [600, 783], heaDmg: 224, heaCapDmg: 30, expResDmg: 20, range: [6, 8], uses: 1, eneCost: 31, heaCost: 155 }, 'scope', 0)
 top('tp_firestorm', 'Firestorm Rain', X, 'L-D', { weight: 75, dmg: [183, 365], heaDmg: 90, expResDmg: 12, heaColDmg: 10, pull: 2, range: [4, 8], uses: 3, heaCost: 81 }, 'missiles', 1)
 top('tp_crimsonhail', 'Crimson Hail', X, 'L-D', { weight: 65, dmg: [229, 361], heaDmg: 112, heaColDmg: 19, pull: 2, range: [2, 4], uses: 2, eneCost: 30, heaCost: 81 }, 'mortar', 3)
 top('tp_wildfire', 'Wildfire Mortar', X, 'E-D', { weight: 50, dmg: [78, 483], heaDmg: 80, expResDmg: 10, range: [3, 6], uses: 2, eneCost: 10, heaCost: 81 }, 'mortar', 0)
 top('tp_starpouncer', 'Star Pouncer', X, 'L-D', { weight: 41, dmg: [215, 356], heaDmg: 38, expResDmg: 5, push: 1, advance: 3, range: [4, 8], uses: 2, heaCost: 100 }, 'pod', 2)
-top('tp_canopyburner', 'Canopy Burner', X, 'L-D', { weight: 27, dmg: [417, 691], heaDmg: 187, expResDmg: 12, push: 1, range: [7, 7], uses: 1, eneCost: 31, heaCost: 155 }, 'scope', 1)
+top('tp_canopyburner', 'Canopy Burner', X, 'L-D', { weight: 27, dmg: [417, 691], heaDmg: 187, heaColDmg: 17, expResDmg: 28, push: 1, range: [4, 7], uses: 1, eneCost: 31, heaCost: 155 }, 'scope', 1)
 top('tp_scorchedscope', 'Scorched Scope', X, 'L-D', { weight: 30, dmg: [531, 852], heaDmg: 224, expResDmg: 15, range: [8, 8], backfire: 468, heaCost: 100 }, 'scope', 2)
 // One-shot heat pressure: meaningful impact without mirroring the target's heat onto the shooter.
-top('tp_meltdown', 'Meltdown Orb', X, 'L-D', { weight: 42, dmg: [180, 260], heaDmg: 415, range: [3, 6], uses: 1, backfire: 60, heaCost: 110 }, 'orb', 0)
+top('tp_meltdown', 'Meltdown Orb', X, 'L-D', { weight: 34, dmg: [180, 260], heaDmg: 415, heaColDmg: 19, range: [3, 8], uses: 1, backfire: 60, heaCost: 110 }, 'orb', 0)
 
 // Electric top weapons
 top('tp_ionmortar', 'Ion Mortar', E, 'C-E', { weight: 42, dmg: [160, 240], eneDmg: 50, range: [3, 6], uses: 3, eneCost: 35 }, 'artillery', 3)
