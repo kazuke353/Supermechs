@@ -79,39 +79,43 @@ function PlayerPanel({ f, name, mech, right, actions, portrait, rank, perks }: P
             <Flame />
           </div>
         </div>
-        <div class="shields">
-          <span
-            class={`rstat${f.eneReg < f.eneRegBase ? ' drained' : ''}`}
-            title={`Energy regen: ${f.eneReg} of ${f.eneRegBase} per turn`}
-          >
-            <Bolt />
-            {f.eneReg}
-          </span>
-          <span
-            class={`rstat${f.heaCol < f.heaColBase ? ' drained' : ''}`}
-            title={`Cooling: ${f.heaCol} of ${f.heaColBase} per cooldown`}
-          >
-            <Flame />
-            {f.heaCol}
-          </span>
-          <span class="shield" title="Physical resistance">
-            <ShieldBadge color="#f5b400" />
-            <span>{f.phyRes}</span>
-          </span>
-          <span class="shield" title="Explosive resistance">
-            <ShieldBadge color="#e0391c" />
-            <span>{f.expRes}</span>
-          </span>
-          <span class="shield" title="Electric resistance">
-            <ShieldBadge color="#1e8fe0" />
-            <span>{f.eleRes}</span>
-          </span>
-          {f.droneActive && (
-            <span class="drone-on" title="Drone active">
-              <IconDrone /> DRONE
+        <div class="pp-bottom">
+          <div class="rstats">
+            <span
+              class={`rstat${f.eneReg < f.eneRegBase ? ' drained' : ''}`}
+              title={`Energy regen: ${f.eneReg} of ${f.eneRegBase} per turn`}
+            >
+              <Bolt />
+              {f.eneReg}
             </span>
-          )}
-          {perks?.map((p) => <PerkBadge id={p} small />)}
+            <span
+              class={`rstat${f.heaCol < f.heaColBase ? ' drained' : ''}`}
+              title={`Cooling: ${f.heaCol} of ${f.heaColBase} per cooldown`}
+            >
+              <Flame />
+              {f.heaCol}
+            </span>
+          </div>
+          <div class="shields">
+            <span class="shield" title="Physical resistance">
+              <ShieldBadge color="#f5b400" />
+              <span>{f.phyRes}</span>
+            </span>
+            <span class="shield" title="Explosive resistance">
+              <ShieldBadge color="#e0391c" />
+              <span>{f.expRes}</span>
+            </span>
+            <span class="shield" title="Electric resistance">
+              <ShieldBadge color="#1e8fe0" />
+              <span>{f.eleRes}</span>
+            </span>
+            {f.droneActive && (
+              <span class="drone-on" title="Drone active">
+                <IconDrone /> DRONE
+              </span>
+            )}
+            {perks?.map((p) => <PerkBadge id={p} small />)}
+          </div>
         </div>
       </div>
     </div>

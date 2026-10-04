@@ -2131,10 +2131,6 @@ p {
   align-items: center;
 }
 
-.pp.right .shields {
-  flex-direction: row-reverse;
-}
-
 .shield {
   position: relative;
   width: 30px;
@@ -2157,6 +2153,19 @@ p {
 .shield span {
   position: relative;
   margin-top: -2px;
+}
+
+.pp-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rstats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .rstat {
