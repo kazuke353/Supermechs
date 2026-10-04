@@ -80,6 +80,20 @@ function PlayerPanel({ f, name, mech, right, actions, portrait, rank, perks }: P
           </div>
         </div>
         <div class="shields">
+          <span
+            class={`rstat${f.eneReg < f.eneRegBase ? ' drained' : ''}`}
+            title={`Energy regen: ${f.eneReg} of ${f.eneRegBase} per turn`}
+          >
+            <Bolt />
+            {f.eneReg}
+          </span>
+          <span
+            class={`rstat${f.heaCol < f.heaColBase ? ' drained' : ''}`}
+            title={`Cooling: ${f.heaCol} of ${f.heaColBase} per cooldown`}
+          >
+            <Flame />
+            {f.heaCol}
+          </span>
           <span class="shield" title="Physical resistance">
             <ShieldBadge color="#f5b400" />
             <span>{f.phyRes}</span>

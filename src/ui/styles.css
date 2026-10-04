@@ -2159,6 +2159,24 @@ p {
   margin-top: -2px;
 }
 
+.rstat {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 900;
+  text-shadow: var(--outline);
+}
+
+.rstat svg {
+  width: 14px;
+  height: 14px;
+}
+
+.rstat.drained {
+  color: #ff6a4d;
+}
+
 .drone-on {
   font-size: 11px;
   font-weight: 900;

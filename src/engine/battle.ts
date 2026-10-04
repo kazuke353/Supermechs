@@ -97,6 +97,9 @@ export interface Fighter {
   heat: number
   heaCap: number
   heaCol: number
+  /** Starting regen and cooling, so the UI can show how much they were drained. */
+  eneRegBase: number
+  heaColBase: number
   phyRes: number
   expRes: number
   eleRes: number
@@ -248,6 +251,8 @@ function makeFighter(init: FighterInit, position: number, arena: boolean): Fight
     heat: 0,
     heaCap: boost(summary.heaCap),
     heaCol: boost(summary.heaCol),
+    eneRegBase: boost(summary.eneReg),
+    heaColBase: boost(summary.heaCol),
     phyRes: summary.phyRes,
     expRes: summary.expRes,
     eleRes: summary.eleRes,
@@ -477,6 +482,8 @@ export interface FighterSnap {
   heat: number
   heaCap: number
   heaCol: number
+  eneRegBase: number
+  heaColBase: number
   phyRes: number
   expRes: number
   eleRes: number
@@ -502,6 +509,8 @@ function snapFighter(f: Fighter): FighterSnap {
     heat: f.heat,
     heaCap: f.heaCap,
     heaCol: f.heaCol,
+    eneRegBase: f.eneRegBase,
+    heaColBase: f.heaColBase,
     phyRes: f.phyRes,
     expRes: f.expRes,
     eleRes: f.eleRes,
